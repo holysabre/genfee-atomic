@@ -3,12 +3,13 @@
  */
 export const BUNDLE_NAME = 'com.atomicservice.6917612394359487010';
 export const BUNDLE_TYPE = 'atomicService';
-export const VERSION_CODE = 1000000;
-export const VERSION_NAME = '1.0.0';
+export const VERSION_CODE = 1000001;
+export const VERSION_NAME = '1.0.1';
 export const TARGET_NAME = 'default';
 export const PRODUCT_NAME = 'default';
-export const BUILD_MODE_NAME = 'debug';
-export const DEBUG = true;
+export const BUILD_MODE_NAME = 'release';
+export const DEBUG = false;
+export const BUILD_VERSION = '1';
 
 /**
  * BuildProfile Class is used only for compatibility purposes.
@@ -22,4 +23,5 @@ export default class BuildProfile {
 	static readonly PRODUCT_NAME = PRODUCT_NAME;
 	static readonly BUILD_MODE_NAME = BUILD_MODE_NAME;
 	static readonly DEBUG = DEBUG;
+	static readonly BUILD_VERSION = BUILD_VERSION;
 }

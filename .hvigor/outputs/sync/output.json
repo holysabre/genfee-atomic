@@ -24,13 +24,13 @@
           "SOURCE_MAP_DIR": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/source_map/default"
         },
         "BUILD_OPTION": {
-          "debuggable": true
+          "debuggable": false
         }
       }
     },
     "BUILD_OPTION": {
       "default-default": {
-        "debuggable": true,
+        "debuggable": false,
         "copyFrom": "default"
       }
     },
@@ -49,8 +49,8 @@
     "SELECT_PRODUCT_NAME": "default",
     "MODULE_BUILD_DIR": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build",
     "BUNDLE_NAME": "com.atomicservice.6917612394359487010",
-    "VERSION_CODE": 1000000,
-    "VERSION_NAME": "1.0.0",
+    "VERSION_CODE": 1000001,
+    "VERSION_NAME": "1.0.1",
     "BUILD_PATH": {
       "OUTPUT_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build/outputs/default"
     },
@@ -76,13 +76,13 @@
             "name": "release",
             "type": "HarmonyOS",
             "material": {
-              "certpath": "/Users/pange/.ohos/config/release_worker-bee-atomic-service_UGBMFrIk8ClN4DWTdamDTiJWeTmkqHb0tKYjOT6d1uk=.cer",
-              "keyAlias": "debugKey",
-              "keyPassword": "0000001BBDD356DBC3BA15F90DE4E13F0BD84D3257369DB366B599C2EE924447BA65C3A184D313FF49CD35",
-              "profile": "/Users/pange/.ohos/config/release_worker-bee-atomic-service_UGBMFrIk8ClN4DWTdamDTiJWeTmkqHb0tKYjOT6d1uk=.p7b",
+              "storeFile": "/Users/pange/Codes/genfee/genfee_release.p12",
+              "storePassword": "0000001AAF8771D2132B2B3DE7ADF81101B762C107B69C8428C4499AA088AED3194C1AB1AFD887E6DBEA",
+              "keyAlias": "genfee",
+              "keyPassword": "0000001AFFC90CF3B575FA6F0A448B598A900E89D777983060FD67CFC0FF3A8642DB2D02EC0BEE260612",
               "signAlg": "SHA256withECDSA",
-              "storeFile": "/Users/pange/.ohos/config/release_worker-bee-atomic-service_UGBMFrIk8ClN4DWTdamDTiJWeTmkqHb0tKYjOT6d1uk=.p12",
-              "storePassword": "0000001BEC2D9A763D99C34B572B21ADF4D90B010388FB36C742300FE1C8AC265AE4C6AA0939FC6F333AE5"
+              "profile": "/Users/pange/Codes/genfee/genfee_releaseRelease.p7b",
+              "certpath": "/Users/pange/Codes/genfee/genfee_release.cer"
             }
           }
         ],
@@ -95,9 +95,6 @@
           }
         ],
         "buildModeSet": [
-          {
-            "name": "debug"
-          },
           {
             "name": "release"
           }

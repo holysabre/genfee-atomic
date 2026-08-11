@@ -179,11 +179,8 @@
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.net.socket.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.security.cert.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.security.cryptoFramework.d.ts",
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.web.webview.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.print.d.ts",
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.identifier.oaid.d.ts",
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.abilityAccessCtrl.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.telephony.call.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.pasteboard.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/graphics3d/SceneResources.d.ts",
@@ -1003,7 +1000,6 @@
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/application/ExtensionContext.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/application/AbilityStageContext.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.print.d.ts",
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.abilityAccessCtrl.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/build-tools/ets-loader/declarations/common.d.ts"
       ],
       "error": false
@@ -1775,32 +1771,9 @@
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/TopicDataSource.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.ets",
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/BannerAdView.ets",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.AdComponent.d.ets",
+        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/BannerAdView.ets",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.AutoAdComponent.d.ets"
-      ],
-      "error": false
-    },
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.identifier.oaid.d.ts": {
-      "mtimeMs": 1785121076000,
-      "children": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.base.d.ts"
-      ],
-      "parent": [
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets"
-      ],
-      "error": false
-    },
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.abilityAccessCtrl.d.ts": {
-      "mtimeMs": 1785121076000,
-      "children": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.base.d.ts",
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/permissions.d.ts",
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/application/Context.d.ts",
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/security/PermissionRequestResult.d.ts"
-      ],
-      "parent": [
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets"
       ],
       "error": false
     },
@@ -1847,22 +1820,6 @@
       ],
       "error": false
     },
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/permissions.d.ts": {
-      "mtimeMs": 1785121076000,
-      "children": [],
-      "parent": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.abilityAccessCtrl.d.ts"
-      ],
-      "error": false
-    },
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/security/PermissionRequestResult.d.ts": {
-      "mtimeMs": 1785121076000,
-      "children": [],
-      "parent": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.abilityAccessCtrl.d.ts"
-      ],
-      "error": false
-    },
     "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.telephony.call.d.ts": {
       "mtimeMs": 1785121076000,
       "children": [
@@ -1884,6 +1841,16 @@
       ],
       "parent": [
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Dialer.ets"
+      ],
+      "error": false
+    },
+    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.AdComponent.d.ets": {
+      "mtimeMs": 1785121076000,
+      "children": [
+        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.d.ts"
+      ],
+      "parent": [
+        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.ets"
       ],
       "error": false
     },
@@ -1915,6 +1882,16 @@
         28007,
         28040
       ]
+    },
+    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.AutoAdComponent.d.ets": {
+      "mtimeMs": 1785121076000,
+      "children": [
+        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.d.ts"
+      ],
+      "parent": [
+        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/BannerAdView.ets"
+      ],
+      "error": false
     },
     "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/build-tools/ets-loader/declarations/action_sheet.d.ts": {
       "mtimeMs": 1785121076000,
@@ -2339,26 +2316,6 @@
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.web.webview.d.ts"
       ],
       "parent": [],
-      "error": false
-    },
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.AdComponent.d.ets": {
-      "mtimeMs": 1785121076000,
-      "children": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.d.ts"
-      ],
-      "parent": [
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.ets"
-      ],
-      "error": false
-    },
-    "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.AutoAdComponent.d.ets": {
-      "mtimeMs": 1785121076000,
-      "children": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.d.ts"
-      ],
-      "parent": [
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/BannerAdView.ets"
-      ],
       "error": false
     }
   }

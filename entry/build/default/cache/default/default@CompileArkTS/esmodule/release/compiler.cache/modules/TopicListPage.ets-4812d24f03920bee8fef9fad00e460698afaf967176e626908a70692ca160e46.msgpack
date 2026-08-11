@@ -1,0 +1,705 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚL.if (!("finalizeConstruction" in ViewPU.prototype)) {
+    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
+}
+import router from "@ohos.router";
+import { TopicApi } from '../services/TopicApi';
+import { AdService } from '../services/AdService';
+import { AdIds } from '../constants/AdIds';
+import { Store } from '../utils/Store';
+import { Dialer } from '../utils/Dialer';
+import { ListRow, TopicDataSource } from '../utils/TopicDataSource';
+import { TopicCard } from '../components/TopicCard';
+import { NativeAdCard } from '../components/NativeAdCard';
+const PAGE_SIZE = 10;
+const AD_INSERT_POS = 8; // æ¯æ‰¹å¸–å­ç¬¬ 8 æ¡åæ’å…¥ 1 æ¡åŸç”Ÿå¹¿å‘Š
+class TopicListPage extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__dataSource = new ObservedPropertyObjectPU(new TopicDataSource(), this, "dataSource");
+        this.__refreshing = new ObservedPropertySimplePU(false, this, "refreshing");
+        this.__address = new ObservedPropertySimplePU('å…¨å›½', this, "address");
+        this.__statusBarHeight = new ObservedPropertySimplePU(0, this, "statusBarHeight");
+        this.page = 1;
+        this.pageTotal = -1;
+        this.loading = false;
+        this.setInitiallyProvidedValue(params);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.dataSource !== undefined) {
+            this.dataSource = params.dataSource;
+        }
+        if (params.refreshing !== undefined) {
+            this.refreshing = params.refreshing;
+        }
+        if (params.address !== undefined) {
+            this.address = params.address;
+        }
+        if (params.statusBarHeight !== undefined) {
+            this.statusBarHeight = params.statusBarHeight;
+        }
+        if (params.page !== undefined) {
+            this.page = params.page;
+        }
+        if (params.pageTotal !== undefined) {
+            this.pageTotal = params.pageTotal;
+        }
+        if (params.loading !== undefined) {
+            this.loading = params.loading;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__dataSource.purgeDependencyOnElmtId(rmElmtId);
+        this.__refreshing.purgeDependencyOnElmtId(rmElmtId);
+        this.__address.purgeDependencyOnElmtId(rmElmtId);
+        this.__statusBarHeight.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__dataSource.aboutToBeDeleted();
+        this.__refreshing.aboutToBeDeleted();
+        this.__address.aboutToBeDeleted();
+        this.__statusBarHeight.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get dataSource() {
+        return this.__dataSource.get();
+    }
+    set dataSource(newValue) {
+        this.__dataSource.set(newValue);
+    }
+    get refreshing() {
+        return this.__refreshing.get();
+    }
+    set refreshing(newValue) {
+        this.__refreshing.set(newValue);
+    }
+    get address() {
+        return this.__address.get();
+    }
+    set address(newValue) {
+        this.__address.set(newValue);
+    }
+    get statusBarHeight() {
+        return this.__statusBarHeight.get();
+    }
+    set statusBarHeight(newValue) {
+        this.__statusBarHeight.set(newValue);
+    }
+    aboutToAppear() {
+        this.statusBarHeight = (AppStorage.get('statusBarHeight') ?? 0);
+        // åˆè§„ï¼šé¦–æ¬¡å¯åŠ¨å¿…é¡»å…ˆè·å¾—éšç§åè®®åŒæ„ï¼ŒåŒæ„åæ‰è¯·æ±‚æ•°æ®ä¸å¹¿å‘Š
+        if (Store.getBool('privacy_agreed', false)) {
+            this.loadList(true, true);
+        }
+        else {
+            this.showPrivacyDialog();
+        }
+    }
+    /** é¦–å¯éšç§åè®®å¼¹çª—ï¼ˆå¹¿å‘Šåˆè§„ç¡¬æ€§è¦æ±‚ï¼šåŒæ„å‰ä¸å¾—è¯·æ±‚å¹¿å‘Šï¼‰ */
+    showPrivacyDialog() {
+        this.getUIContext().getPromptAction().showDialog({
+            title: 'ç”¨æˆ·åè®®ä¸éšç§æ”¿ç­–',
+            message: 'æ„Ÿè°¢æ‚¨ä½¿ç”¨å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°ã€‚æˆ‘ä»¬å°†ä¸¥æ ¼éµå®ˆæ³•å¾‹æ³•è§„ï¼Œä¿æŠ¤æ‚¨çš„ä¸ªäººä¿¡æ¯å®‰å…¨ã€‚' +
+                'æˆ‘ä»¬ä¼šåŸºäºç½‘ç»œçŠ¶æ€åŠ è½½æ‹›è˜ä¿¡æ¯ï¼Œå¹¶åœ¨æ‚¨åŒæ„åå±•ç¤ºå¹¿å‘Šå†…å®¹ã€‚è¯·æ‚¨ä»”ç»†é˜…è¯»å¹¶åŒæ„ã€Šç”¨æˆ·åè®®ã€‹å’Œã€Šéšç§æ”¿ç­–ã€‹åç»§ç»­ä½¿ç”¨ã€‚',
+            buttons: [
+                { text: 'åŒæ„', color: '#FFC900' },
+                { text: 'ä¸åŒæ„', color: '#888888' }
+            ]
+        }).then((result) => {
+            if (result.index === 0) {
+                Store.putBool('privacy_agreed', true);
+                this.initAfterConsent();
+            }
+            else {
+                // ä¸åŒæ„åˆ™é€€å‡ºï¼ˆè¡Œä¸šé€šè¡Œåˆè§„åšæ³•ï¼‰
+                getContext(this).terminateSelf();
+            }
+        });
+    }
+    async initAfterConsent() {
+        // æ³¨ï¼šå…ƒæœåŠ¡ä¸æ”¯æŒ OAIDï¼ˆidentifier è¢«ç¦ç”¨ï¼‰ï¼Œæ— éœ€å¹¿å‘Šæƒé™åˆå§‹åŒ–ï¼Œä»…éä¸ªæ€§åŒ–å¹¿å‘Š
+        this.loadList(true, true);
+    }
+    async loadList(refresh, replace) {
+        if (this.loading) {
+            return;
+        }
+        this.loading = true;
+        try {
+            const res = await TopicApi.list(this.page, 1, 0);
+            if (res.code === 200 && res.data) {
+                const topics = res.data.data ?? [];
+                this.pageTotal = res.data.last_page ?? -1;
+                const rows = topics.map((t) => {
+                    const r = new ListRow();
+                    r.kind = 0;
+                    r.topic = t;
+                    return r;
+                });
+                // ä¿¡æ¯æµå¹¿å‘Šï¼šæ¯æ‰¹è¯·æ±‚ 1 æ¡æ–°å¹¿å‘Šæ’å…¥ï¼ˆåˆè§„ï¼šä¸é‡å¤å±•ç¤ºåŒä¸€å¹¿å‘Šï¼‰
+                if (AdIds.AD_ENABLED && rows.length > 0) {
+                    const ads = await AdService.loadNativeAds(getContext(this), AdIds.nativeAdId(), 1);
+                    if (ads.length > 0) {
+                        const adRow = new ListRow();
+                        adRow.kind = 1;
+                        adRow.ad = ads[0];
+                        rows.splice(Math.min(AD_INSERT_POS, rows.length), 0, adRow);
+                    }
+                }
+                if (replace) {
+                    this.dataSource.replaceAll(rows);
+                }
+                else {
+                    this.dataSource.append(rows);
+                }
+            }
+            else {
+                this.getUIContext().getPromptAction().showToast({ message: res.msg ?? 'åŠ è½½å¤±è´¥' });
+            }
+        }
+        finally {
+            this.loading = false;
+            if (refresh) {
+                this.refreshing = false;
+            }
+        }
+    }
+    onRefresh() {
+        this.page = 1;
+        this.loadList(true, true);
+    }
+    onReachEnd() {
+        if (!this.loading && this.pageTotal > 0 && this.page < this.pageTotal) {
+            this.page += 1;
+            this.loadList(false, false);
+        }
+    }
+    headerBar(parent = null) {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.width('100%');
+            Column.padding({ top: this.statusBarHeight });
+            Column.backgroundColor('#B0CBEB');
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // logo + æ ‡é¢˜ï¼ˆè¿˜åŸå°ç¨‹åºè‡ªå®šä¹‰å¯¼èˆªæ ï¼‰
+            Row.create();
+            // logo + æ ‡é¢˜ï¼ˆè¿˜åŸå°ç¨‹åºè‡ªå®šä¹‰å¯¼èˆªæ ï¼‰
+            Row.width('100%');
+            // logo + æ ‡é¢˜ï¼ˆè¿˜åŸå°ç¨‹åºè‡ªå®šä¹‰å¯¼èˆªæ ï¼‰
+            Row.height(38);
+            // logo + æ ‡é¢˜ï¼ˆè¿˜åŸå°ç¨‹åºè‡ªå®šä¹‰å¯¼èˆªæ ï¼‰
+            Row.padding({ left: 10, right: 10 });
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777225, "type": 20000, params: [], "bundleName": "com.atomicservice.6917612394359487010", "moduleName": "entry" });
+            Image.width(30);
+            Image.height(30);
+            Image.borderRadius(15);
+            Image.margin({ right: 8 });
+        }, Image);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°');
+            Text.fontSize(14);
+            Text.fontWeight(FontWeight.Bold);
+            Text.fontColor('#222222');
+        }, Text);
+        Text.pop();
+        // logo + æ ‡é¢˜ï¼ˆè¿˜åŸå°ç¨‹åºè‡ªå®šä¹‰å¯¼èˆªæ ï¼‰
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // åœ°åŒºï¼ˆé™æ€"å…¨å›½"ï¼‰+ ä¸­éƒ¨ tabs å›¾
+            Stack.create();
+            // åœ°åŒºï¼ˆé™æ€"å…¨å›½"ï¼‰+ ä¸­éƒ¨ tabs å›¾
+            Stack.alignContent(Alignment.Center);
+            // åœ°åŒºï¼ˆé™æ€"å…¨å›½"ï¼‰+ ä¸­éƒ¨ tabs å›¾
+            Stack.width('100%');
+            // åœ°åŒºï¼ˆé™æ€"å…¨å›½"ï¼‰+ ä¸­éƒ¨ tabs å›¾
+            Stack.height(36);
+        }, Stack);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width('100%');
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create(this.address);
+            Text.fontSize(12);
+            Text.fontColor('#222222');
+            Text.margin({ left: 10 });
+        }, Text);
+        Text.pop();
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width(177);
+            Row.height(24);
+            Row.backgroundColor(Color.White);
+            Row.borderRadius(12);
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777230, "type": 20000, params: [], "bundleName": "com.atomicservice.6917612394359487010", "moduleName": "entry" });
+            Image.width('100%');
+            Image.height('100%');
+        }, Image);
+        Row.pop();
+        // åœ°åŒºï¼ˆé™æ€"å…¨å›½"ï¼‰+ ä¸­éƒ¨ tabs å›¾
+        Stack.pop();
+        Column.pop();
+    }
+    emptyView(parent = null) {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.width('100%');
+            Column.height(400);
+            Column.justifyContent(FlexAlign.Center);
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777226, "type": 20000, params: [], "bundleName": "com.atomicservice.6917612394359487010", "moduleName": "entry" });
+            Image.width(130);
+            Image.height(130);
+            Image.margin({ bottom: 10 });
+        }, Image);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('æš‚æ— æ•°æ®');
+            Text.fontSize(14);
+            Text.fontColor('#333333');
+        }, Text);
+        Text.pop();
+        Column.pop();
+    }
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.width('100%');
+            Column.height('100%');
+            Column.backgroundColor('#B0CBEB');
+        }, Column);
+        this.headerBar.bind(this)();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            If.create();
+            if (this.dataSource.isEmpty() && !this.loading) {
+                this.ifElseBranchUpdateFunction(0, () => {
+                    this.emptyView.bind(this)();
+                });
+            }
+            else {
+                this.ifElseBranchUpdateFunction(1, () => {
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Refresh.create({ refreshing: { value: this.refreshing, changeEvent: newValue => { this.refreshing = newValue; } } });
+                        Refresh.onRefreshing(() => this.onRefresh());
+                        Refresh.layoutWeight(1);
+                    }, Refresh);
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        List.create();
+                        List.width('100%');
+                        List.padding({ left: 20, right: 20 });
+                        List.onReachEnd(() => this.onReachEnd());
+                    }, List);
+                    {
+                        const __lazyForEachItemGenFunction = (_item, index) => {
+                            const item = _item;
+                            {
+                                const itemCreation2 = (elmtId, isInitialRender) => {
+                                    ListItem.create(() => { }, false);
+                                };
+                                const observedDeepRender = () => {
+                                    this.observeComponentCreation2(itemCreation2, ListItem);
+                                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                        If.create();
+                                        if (item.kind === 0) {
+                                            this.ifElseBranchUpdateFunction(0, () => {
+                                                this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                                    __Common__.create();
+                                                    __Common__.onClick(() => {
+                                                        const id = item.topic?.id;
+                                                        if (id) {
+                                                            router.pushUrl({ url: 'pages/TopicDetailPage', params: { id: id } });
+                                                        }
+                                                    });
+                                                }, __Common__);
+                                                {
+                                                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                                        if (isInitialRender) {
+                                                            let componentCall = new TopicCard(this, {
+                                                                topic: item.topic,
+                                                                onContact: (mobile) => {
+                                                                    Dialer.dial(this.getUIContext(), mobile);
+                                                                }
+                                                            }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 197, col: 19 });
+                                                            ViewPU.create(componentCall);
+                                                            let paramsLambda = () => {
+                                                                return {
+                                                                    topic: item.topic,
+                                                                    onContact: (mobile) => {
+                                                                        Dialer.dial(this.getUIContext(), mobile);
+                                                                    }
+                                                                };
+                                                            };
+                                                            componentCall.paramsGenerator_ = paramsLambda;
+                                                        }
+                                                        else {
+                                                            this.updateStateVarsOfChildByElmtId(elmtId, {});
+                                                        }
+                                                    }, { name: "TopicCard" });
+                                                }
+                                                __Common__.pop();
+                                            });
+                                        }
+                                        else {
+                                            this.ifElseBranchUpdateFunction(1, () => {
+                                                {
+                                                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                                        if (isInitialRender) {
+                                                            let componentCall = new NativeAdCard(this, { ad: item.ad }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 210, col: 19 });
+                                                            ViewPU.create(componentCall);
+                                                            let paramsLambda = () => {
+                                                                return {
+                                                                    ad: item.ad
+                                                                };
+                                                            };
+                                                            componentCall.paramsGenerator_ = paramsLambda;
+                                                        }
+                                                        else {
+                                                            this.updateStateVarsOfChildByElmtId(elmtId, {});
+                                                        }
+                                                    }, { name: "NativeAdCard" });
+                                                }
+                                            });
+                                        }
+                                    }, If);
+                                    If.pop();
+                                    ListItem.pop();
+                                };
+                                observedDeepRender();
+                            }
+                        };
+                        const __lazyForEachItemIdFunc = (item, index) => `${item.kind}_${index}_${item.topic?.id ?? 'ad'}`;
+                        LazyForEach.create("1", this, this.dataSource, __lazyForEachItemGenFunction, __lazyForEachItemIdFunc);
+                        LazyForEach.pop();
+                    }
+                    List.pop();
+                    Refresh.pop();
+                });
+            }
+        }, If);
+        If.pop();
+        Column.pop();
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+    static getEntryName() {
+        return "TopicListPage";
+    }
+}
+registerNamedRoute(() => new TopicListPage(undefined, {}), "", { bundleName: "com.atomicservice.6917612394359487010", moduleName: "entry", pagePath: "pages/TopicListPage", pageFullPath: "entry/src/main/ets/pages/TopicListPage", integratedHsp: "false", moduleType: "followWithHap" });
+//# sourceMappingURL=TopicListPage.js.mapÂ™Ùi hvigor_ignore__Applications_DevEco-Studio.app_Contents_sdk_default_openharmony_ets_api_@ohos.router.d.tsÙ\/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/TopicApi.etsÙ]/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.etsÙZ/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/AdIds.etsÙV/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Store.etsÙW/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Dialer.etsÙ`/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/TopicDataSource.etsÙ_/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/TopicCard.etsÙb/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.etsÙ^/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicListPage.etsÔrBšªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath¬shouldEmitJs¥entryÃÂÙ9/Users/pange/Codes/genfee/worker-bee-atomic-service/entryÙ3/Users/pange/Codes/genfee/worker-bee-atomic-service¥entry¥1.0.0Ô  Ù9/Users/pange/Codes/genfee/worker-bee-atomic-service/entryÃÃÚrimport { common } from '@kit.AbilityKit';
+import { router } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { Topic, TopicApi } from '../services/TopicApi';
+import { AdService } from '../services/AdService';
+import { AdIds } from '../constants/AdIds';
+import { Store } from '../utils/Store';
+import { Dialer } from '../utils/Dialer';
+import { ListRow, TopicDataSource } from '../utils/TopicDataSource';
+import { TopicCard } from '../components/TopicCard';
+import { NativeAdCard } from '../components/NativeAdCard';
+
+const PAGE_SIZE: number = 10;
+const AD_INSERT_POS: number = 8; // æ¯æ‰¹å¸–å­ç¬¬ 8 æ¡åæ’å…¥ 1 æ¡åŸç”Ÿå¹¿å‘Š
+
+@Entry
+@Component
+struct TopicListPage {
+  @State private dataSource: TopicDataSource = new TopicDataSource();
+  @State private refreshing: boolean = false;
+  @State private address: string = 'å…¨å›½'; // ç®€åŒ–ç‰ˆå›ºå®šå…¨å›½ï¼ˆæ— åœ°åŒºé€‰æ‹©é¡µï¼‰
+  @State private statusBarHeight: number = 0;
+
+  private page: number = 1;
+  private pageTotal: number = -1;
+  private loading: boolean = false;
+
+  aboutToAppear(): void {
+    this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
+    // åˆè§„ï¼šé¦–æ¬¡å¯åŠ¨å¿…é¡»å…ˆè·å¾—éšç§åè®®åŒæ„ï¼ŒåŒæ„åæ‰è¯·æ±‚æ•°æ®ä¸å¹¿å‘Š
+    if (Store.getBool('privacy_agreed', false)) {
+      this.loadList(true, true);
+    } else {
+      this.showPrivacyDialog();
+    }
+  }
+
+  /** é¦–å¯éšç§åè®®å¼¹çª—ï¼ˆå¹¿å‘Šåˆè§„ç¡¬æ€§è¦æ±‚ï¼šåŒæ„å‰ä¸å¾—è¯·æ±‚å¹¿å‘Šï¼‰ */
+  private showPrivacyDialog(): void {
+    this.getUIContext().getPromptAction().showDialog({
+      title: 'ç”¨æˆ·åè®®ä¸éšç§æ”¿ç­–',
+      message: 'æ„Ÿè°¢æ‚¨ä½¿ç”¨å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°ã€‚æˆ‘ä»¬å°†ä¸¥æ ¼éµå®ˆæ³•å¾‹æ³•è§„ï¼Œä¿æŠ¤æ‚¨çš„ä¸ªäººä¿¡æ¯å®‰å…¨ã€‚' +
+        'æˆ‘ä»¬ä¼šåŸºäºç½‘ç»œçŠ¶æ€åŠ è½½æ‹›è˜ä¿¡æ¯ï¼Œå¹¶åœ¨æ‚¨åŒæ„åå±•ç¤ºå¹¿å‘Šå†…å®¹ã€‚è¯·æ‚¨ä»”ç»†é˜…è¯»å¹¶åŒæ„ã€Šç”¨æˆ·åè®®ã€‹å’Œã€Šéšç§æ”¿ç­–ã€‹åç»§ç»­ä½¿ç”¨ã€‚',
+      buttons: [
+        { text: 'åŒæ„', color: '#FFC900' },
+        { text: 'ä¸åŒæ„', color: '#888888' }
+      ]
+    }).then((result) => {
+      if (result.index === 0) {
+        Store.putBool('privacy_agreed', true);
+        this.initAfterConsent();
+      } else {
+        // ä¸åŒæ„åˆ™é€€å‡ºï¼ˆè¡Œä¸šé€šè¡Œåˆè§„åšæ³•ï¼‰
+        (getContext(this) as common.UIAbilityContext).terminateSelf();
+      }
+    });
+  }
+
+  private async initAfterConsent(): Promise<void> {
+    // æ³¨ï¼šå…ƒæœåŠ¡ä¸æ”¯æŒ OAIDï¼ˆidentifier è¢«ç¦ç”¨ï¼‰ï¼Œæ— éœ€å¹¿å‘Šæƒé™åˆå§‹åŒ–ï¼Œä»…éä¸ªæ€§åŒ–å¹¿å‘Š
+    this.loadList(true, true);
+  }
+
+  private async loadList(refresh: boolean, replace: boolean): Promise<void> {
+    if (this.loading) {
+      return;
+    }
+    this.loading = true;
+    try {
+      const res = await TopicApi.list(this.page, 1, 0);
+      if (res.code === 200 && res.data) {
+        const topics: Topic[] = res.data.data ?? [];
+        this.pageTotal = res.data.last_page ?? -1;
+
+        const rows: ListRow[] = topics.map((t: Topic) => {
+          const r = new ListRow();
+          r.kind = 0;
+          r.topic = t;
+          return r;
+        });
+
+        // ä¿¡æ¯æµå¹¿å‘Šï¼šæ¯æ‰¹è¯·æ±‚ 1 æ¡æ–°å¹¿å‘Šæ’å…¥ï¼ˆåˆè§„ï¼šä¸é‡å¤å±•ç¤ºåŒä¸€å¹¿å‘Šï¼‰
+        if (AdIds.AD_ENABLED && rows.length > 0) {
+          const ads = await AdService.loadNativeAds(getContext(this), AdIds.nativeAdId(), 1);
+          if (ads.length > 0) {
+            const adRow = new ListRow();
+            adRow.kind = 1;
+            adRow.ad = ads[0];
+            rows.splice(Math.min(AD_INSERT_POS, rows.length), 0, adRow);
+          }
+        }
+
+        if (replace) {
+          this.dataSource.replaceAll(rows);
+        } else {
+          this.dataSource.append(rows);
+        }
+      } else {
+        this.getUIContext().getPromptAction().showToast({ message: res.msg ?? 'åŠ è½½å¤±è´¥' });
+      }
+    } finally {
+      this.loading = false;
+      if (refresh) {
+        this.refreshing = false;
+      }
+    }
+  }
+
+  private onRefresh(): void {
+    this.page = 1;
+    this.loadList(true, true);
+  }
+
+  private onReachEnd(): void {
+    if (!this.loading && this.pageTotal > 0 && this.page < this.pageTotal) {
+      this.page += 1;
+      this.loadList(false, false);
+    }
+  }
+
+  @Builder
+  headerBar() {
+    Column() {
+      // logo + æ ‡é¢˜ï¼ˆè¿˜åŸå°ç¨‹åºè‡ªå®šä¹‰å¯¼èˆªæ ï¼‰
+      Row() {
+        Image($r('app.media.avatar'))
+          .width(30)
+          .height(30)
+          .borderRadius(15)
+          .margin({ right: 8 })
+        Text('å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°')
+          .fontSize(14)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#222222')
+      }
+      .width('100%')
+      .height(38)
+      .padding({ left: 10, right: 10 })
+
+      // åœ°åŒºï¼ˆé™æ€"å…¨å›½"ï¼‰+ ä¸­éƒ¨ tabs å›¾
+      Stack() {
+        Row() {
+          Text(this.address)
+            .fontSize(12)
+            .fontColor('#222222')
+            .margin({ left: 10 })
+        }
+        .width('100%')
+
+        Row() {
+          Image($r('app.media.zzrz'))
+            .width('100%')
+            .height('100%')
+        }
+        .width(177)
+        .height(24)
+        .backgroundColor(Color.White)
+        .borderRadius(12)
+      }
+      .alignContent(Alignment.Center)
+      .width('100%')
+      .height(36)
+    }
+    .width('100%')
+    .padding({ top: this.statusBarHeight })
+    .backgroundColor('#B0CBEB')
+  }
+
+  @Builder
+  emptyView() {
+    Column() {
+      Image($r('app.media.empty'))
+        .width(130)
+        .height(130)
+        .margin({ bottom: 10 })
+      Text('æš‚æ— æ•°æ®')
+        .fontSize(14)
+        .fontColor('#333333')
+    }
+    .width('100%')
+    .height(400)
+    .justifyContent(FlexAlign.Center)
+  }
+
+  build() {
+    Column() {
+      this.headerBar()
+
+      if (this.dataSource.isEmpty() && !this.loading) {
+        this.emptyView()
+      } else {
+        Refresh({ refreshing: $$this.refreshing }) {
+          List() {
+            LazyForEach(this.dataSource, (item: ListRow, index: number) => {
+              ListItem() {
+                if (item.kind === 0) {
+                  TopicCard({
+                    topic: item.topic,
+                    onContact: (mobile: string) => {
+                      Dialer.dial(this.getUIContext(), mobile);
+                    }
+                  })
+                    .onClick(() => {
+                      const id = item.topic?.id;
+                      if (id) {
+                        router.pushUrl({ url: 'pages/TopicDetailPage', params: { id: id } });
+                      }
+                    })
+                } else {
+                  NativeAdCard({ ad: item.ad })
+                }
+              }
+            }, (item: ListRow, index: number) => `${item.kind}_${index}_${item.topic?.id ?? 'ad'}`)
+          }
+          .width('100%')
+          .padding({ left: 20, right: 20 })
+          .onReachEnd(() => this.onReachEnd())
+        }
+        .onRefreshing(() => this.onRefresh())
+        .layoutWeight(1)
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor('#B0CBEB')
+  }
+}
+ÀÔrC™¬@ohos.router²../constants/AdIdsµ../services/AdService´../services/TopicApi®../utils/Store¯../utils/Dialer¸../utils/TopicDataSource·../components/TopicCardº../components/NativeAdCardÔrD—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙi hvigor_ignore__Applications_DevEco-Studio.app_Contents_sdk_default_openharmony_ets_api_@ohos.router.d.tsÔrE‘¯hostModulesInfo‘ÔrF’²hostDependencyName®hostModuleName¬@ohos.router¥entryÃªoh-resolveÂDAÂÙZ/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/AdIds.etsAÃªoh-resolveÂDAÂÙ]/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.etsAÃªoh-resolveÂDAÂÙ\/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/TopicApi.etsAÃªoh-resolveÂDAÂÙV/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Store.etsAÃªoh-resolveÂDAÂÙW/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Dialer.etsAÃªoh-resolveÂDAÂÙ`/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/TopicDataSource.etsAÃªoh-resolveÂDAÂÙ_/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/TopicCard.etsAÃªoh-resolveÂDAÂÙb/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.etsAÃªoh-resolveÂ“ÔrG–§version¤fileªsourceRoot§sources¥names¨mappings°TopicListPage.js ‘±TopicListPage.etsÜ‰–”   ” 	” ” ”! #”" $˜”   ” ”	 ” ” ”  ”/ 6”0 7˜”   ” ”	 	” ” ” ”1 1”2 2˜”   ” ”	 	” ” ” ”* *”+ +˜”   ” ”	 	” ” ” ”& &”' '˜”   ” ”	 	” ” ” ”( (”) )š”   ” ”	 	” ” ”! !”# #”) )”ÌC ÌC”ÌD ÌD˜”  	 ” 	”	 		” 	” 	” 	”3 	3”4 	4˜”  
+ ” 
+”	 
+	” 
+” 
+” 
+”9 
+9”: 
+:–”   ” ” ” ” ” ˜”   ” ” ” ” ”  ” !”0 8’” ” ‘”  ””9 /”= 3”ÌL ÌB”ÌN ÌD’”9 '”> ,’”6 #”: '’”> +”? ,’” ” “” ” ”  ’” ” "‘”  ’” ” ’” ” ’” ” ’” ” ’” ” ’” ” ’” ”  ’” ”  ’” ” Ü ” ” ” 	” ” ”  ”* &”+ '”. *”/ 3”Ì@ ÌD”ÌA ÌE”ÌE ÌI”ÌF ÌJ”ÌG ÌK”ÌH ÌL’” ”) %›” ” ” ” ” ” ”* &”, (”1 -”2 .”4 0š” ” 
+” ” ” ” ”  ”$ ”% ”&  ‘”	  ‘”  –” !” !
+” !”" !”$ !”% !‘”	 "’” #” #’” %”' %%’” &
+” &›” '” '” '	” '” '” '”+ ''”- ')”. '*”8 '4”9 '5”” (” (” (” (”” )” )” )”< )6’” *”ÌK *ÌC“” +” +” +š” ,” ,
+” ,” ,” ,” ,”# ,”% ,”. ,&”0 ,(š” -” -
+” -” -” -” -”$ -”& -”/ -'”1 -)‘” .™”	 /”
+ /” /” /” /” /” /” /” /˜” 0” 0
+” 0” 0” 0”! 0”" 0”$ 0š” 1” 1” 1” 1” 1”. 1&”0 1(”4 1,”5 1-”6 1.–” 2” 2” 2”% 2”' 2”( 2 ‘” 3‘” 3’” 4”# 4™” 5	” 5” 5” 5”  55”! 56”. 5ÌC”0 5ÌE”1 5ÌF‘” 6”” 7”	 7”
+ 7” 7’” 8” 8”” :
+”	 :”
+ :” : ’” ;”: ;6š” <” <” <	” <” <” <” <”  <”! <”" <’” =” =˜” ?
+”	 ?”
+ ?” ?” ?” ?)” ?+”# ?;–” Ì@” Ì@” Ì@” Ì@” Ì@” Ì@’” ÌA” ÌA‘”	 ÌB—” ÌC” ÌC” ÌC	” ÌC” ÌC” ÌC” ÌC’” ÌD” ÌDÜ ” ÌE” ÌE” ÌE” ÌE” ÌE”& ÌE ”' ÌE!”+ ÌE%”, ÌE&”0 ÌE*”1 ÌE+”5 ÌE/”7 ÌE1”8 ÌE2”: ÌE4”; ÌE5”< ÌE6”= ÌE7œ” ÌF” ÌF
+” ÌF” ÌF” ÌF” ÌF”  ÌF”$ ÌF”' ÌF!”( ÌF"”, ÌF&”. ÌF(œ” ÌG” ÌG” ÌG” ÌG ”" ÌG#”# ÌG$”' ÌG(”( ÌG)”, ÌG-”0 ÌG1”2 ÌG3”3 ÌG4” ÌH” ÌH” ÌH” ÌH”! ÌH”$ ÌH”% ÌH”) ÌH!”* ÌH"”3 ÌH+”7 ÌH/”8 ÌH0”9 ÌH1”: ÌH2œ” ÌJ” ÌJ” ÌJ” ÌJ ”# ÌJ&”$ ÌJ'”' ÌJ*”( ÌJ+”) ÌJ,”* ÌJ4”, ÌJ6”. ÌJ8˜” ÌK
+” ÌK” ÌK” ÌK”" ÌK”) ÌK”+ ÌK!”, ÌK"—” ÌL
+” ÌL” ÌL” ÌL” ÌL” ÌL” ÌL—” ÌM
+” ÌM” ÌM” ÌM” ÌM” ÌM”  ÌM”” ÌN
+” ÌN” ÌN” ÌN”” ÌO” ÌO	” ÌO
+” ÌO’” ÌQ”4 ÌQ,œ” ÌR” ÌR” ÌR” ÌR”$ ÌR”( ÌR ”, ÌR$”- ÌR%”3 ÌR+”6 ÌR.”7 ÌR/”9 ÌR1Ü ” ÌS
+” ÌS” ÌS”  ÌS”& ÌS”/ ÌS%”0 ÌS&”= ÌS3”> ÌS4”ÌH ÌS>”ÌI ÌS?”ÌM ÌSÌC”ÌN ÌSÌD”ÌP ÌSÌF”ÌU ÌSÌK”ÌV ÌSÌL”Ì` ÌSÌV”Ìb ÌSÌX”Ìd ÌSÌZ”Ìe ÌSÌ[”Ìf ÌSÌ\”Ìg ÌSÌ]˜” ÌT
+” ÌT” ÌT” ÌT”" ÌT”% ÌT”& ÌT”( ÌT˜” ÌU” ÌU”# ÌU”& ÌU”* ÌU”1 ÌU%”3 ÌU'”4 ÌU(—” ÌV” ÌV” ÌV”" ÌV”% ÌV”& ÌV”' ÌVš” ÌW” ÌW” ÌW”  ÌW”# ÌW”& ÌW”' ÌW”( ÌW”) ÌW”* ÌWÜ ” ÌX” ÌX” ÌX”# ÌX”$ ÌX”( ÌX”) ÌX”, ÌX ”- ÌX!”: ÌX.”< ÌX0”Ì@ ÌX4”ÌA ÌX5”ÌG ÌX;”ÌH ÌX<”ÌJ ÌX>”ÌK ÌX?”ÌM ÌXÌA”ÌR ÌXÌF”ÌS ÌXÌG”ÌT ÌXÌH‘” ÌY‘” ÌZ	”” Ì\” Ì\” Ì\” Ì\š” Ì]
+” Ì]” Ì]”# Ì]”$ Ì]”. Ì]$”/ Ì]%”3 Ì])”4 Ì]*”5 Ì]+‘” Ì^	‘” Ì^š” Ì_
+” Ì_” Ì_”# Ì_”$ Ì_”* Ì_ ”+ Ì_!”/ Ì_%”0 Ì_&”1 Ì_'‘” Ì`	‘” Ìa‘” ÌaÜ ” Ìb” Ìb” Ìb”! Ìb”# Ìb”$ Ìb”3 Ìb+”5 Ìb-”6 Ìb.”? Ìb7”Ì@ Ìb8”ÌB Ìb:”ÌI ÌbÌA”ÌK ÌbÌC”ÌN ÌbÌF”ÌO ÌbÌG”ÌR ÌbÌJ”ÌV ÌbÌN”Ì\ ÌbÌT”Ì^ ÌbÌV”Ì_ ÌbÌW”Ì` ÌbÌX‘” Ìc‘”	 Ìd‘” Ìd—” Ìe” Ìe
+” Ìe” Ìe” Ìe”  Ìe”! Ìe”” Ìf” Ìf
+” Ìf” Ìf—” Ìg” Ìg” Ìg” Ìg”" Ìg”' Ìg”( Ìg ‘” Ìh‘”	 Ìi’” Ìj” Ìj’” Ìl
+” Ìl—” Ìm” Ìm” Ìm	” Ìm” Ìm” Ìm” Ìmš” Ìn” Ìn” Ìn	” Ìn” Ìn” Ìn” Ìn”  Ìn”! Ìn”" Ìn’” Ìo” Ìo’” Ìq
+” ÌqÜ ” Ìr” Ìr” Ìr	” Ìr” Ìr” Ìr” Ìr”! Ìr”" Ìr”+ Ìr'”. Ìr*”/ Ìr+”3 Ìr/”7 Ìr3”8 Ìr4”< Ìr8”? Ìr;”ÌC Ìr?”ÌD ÌrÌ@”ÌM ÌrÌI”ÌO ÌrÌK—” Ìs” Ìs
+” Ìs” Ìs” Ìs” Ìs” Ìsš” Ìt” Ìt
+” Ìt” Ìt” Ìt” Ìt”! Ìt”& Ìt ”' Ìt!”( Ìt"‘”	 Ìu’” Ìv” Ìv’” Ìy” Ìy’” Ìz” Ìz
+–” Ìz” Ìz
+” Ì£” Ì£
+” Ì£” Ì£œ” Ìz” Ìz
+” Ì¤” Ì¤” Ì¤” Ì¤”  Ì¤”" Ì¤”& Ì¤”' Ì¤”6 Ì¤(”8 Ì¤*–” Ìz” Ìz
+” Ì¥”" Ì¥”# Ì¥”, Ì¥’” Ì{”% Ì{’” Ì|” Ì|	’” Ì{”% Ì{–” Ì|” Ì|	” Ì‡” Ì‡” Ì‡” Ì‡’” Ì{”% Ì{–” Ì|” Ì|	” Ìˆ” Ìˆ” Ìˆ” Ìˆ’” Ì{”% Ì{” Ì|” Ì|	” Ì‰” Ì‰” Ì‰” Ì‰” Ì‰”  Ì‰”" Ì‰”$ Ì‰”) Ì‰ ”+ Ì‰"”- Ì‰$”/ Ì‰&’” Ì}” Ì}–” Ì}” Ì}” Ì~” Ì~” Ì~” Ì~–” Ì}” Ì}” Ì” Ì” Ì” Ì–” Ì}” Ì}” Ì€” Ì€” Ì€”! Ì€š” Ì}” Ì}” Ì” Ì” Ì” Ì”  Ì”" Ì”# Ì”% Ì”” Ì‚” Ì‚” Ì‚”" Ì‚–” Ì‚” Ì‚” Ìƒ” Ìƒ” Ìƒ” Ìƒ˜” Ì‚” Ì‚” Ì„” Ì„” Ì„”& Ì„ ”' Ì„!”+ Ì„%–” Ì‚” Ì‚” Ì…” Ì…” Ì…”$ Ì…’” Ì‚” Ì‚’” Ì{”! Ì{’” Ì|” Ì|	’” Ì‹”$ Ì‹’” ÌŒ” ÌŒ’” Ì‹”$ Ì‹˜” ÌŒ” ÌŒ” ÌŸ” ÌŸ” ÌŸ”( ÌŸ”) ÌŸ”/ ÌŸ$’” Ì‹”$ Ì‹–” ÌŒ” ÌŒ” Ì ” Ì ” Ì ” Ì ’” Ì‹”$ Ì‹–” ÌŒ” ÌŒ” Ì¡” Ì¡” Ì¡” Ì¡’” Ì” Ì–” Ì” Ì” Ì“	” Ì“” Ì“” Ì“–” Ì
+” Ì” Ì” Ì” Ì”$ Ì–” Ì
+” Ì” Ì” Ì” Ì” Ì–” Ì
+” Ì” Ì” Ì” Ì”$ Ì š” Ì
+” Ì” Ì‘” Ì‘” Ì‘” Ì‘” Ì‘”  Ì‘”" Ì‘”$ Ì‘ ’” Ì
+” Ì’” Ì” Ì’” Ì•” Ì•–” Ì•” Ì•” Ìš	” Ìš” Ìš” Ìš–” Ì•” Ì•” Ì›	” Ì›” Ì›” Ì›˜” Ì•” Ì•” Ìœ	” Ìœ”  Ìœ”% Ìœ”& Ìœ”+ Ìœ$–” Ì•” Ì•” Ì	” Ì” Ì” Ì’” Ì–
+” Ì––” Ì–
+” Ì–” Ì—” Ì—” Ì—” Ì—–” Ì–
+” Ì–” Ì˜” Ì˜” Ì˜” Ì˜’” Ì•” Ì•’” Ì‹”  Ì‹’” ÌŒ” ÌŒ’” Ìz” Ìz
+‘” Ì¦’” Ì©” Ì©’” Ìª” Ìª
+–” Ìª” Ìª
+” Ì³” Ì³
+” Ì³” Ì³–” Ìª” Ìª
+” Ì´” Ì´” Ì´” Ì´˜” Ìª” Ìª
+” Ìµ”! Ìµ”" Ìµ”+ Ìµ”, Ìµ”2 Ìµ$’” Ì«” Ì«–” Ì«” Ì«” Ì¬	” Ì¬” Ì¬” Ì¬–” Ì«” Ì«” Ì­	” Ì­” Ì­” Ì­š” Ì«” Ì«” Ì®	” Ì®” Ì®” Ì®”! Ì®”# Ì®”% Ì®”' Ì®”” Ì¯” Ì¯
+” Ì¯” Ì¯–” Ì¯” Ì¯
+” Ì°	” Ì°” Ì°” Ì°–” Ì¯” Ì¯
+” Ì±	” Ì±” Ì±”$ Ì±’” Ì¯” Ì¯
+’” Ìª” Ìª
+‘” Ì¶‘” Ì¸’” Ì¹” Ì¹
+–” Ì¹” Ì¹
+” ÌŞ” ÌŞ
+” ÌŞ” ÌŞ–” Ì¹” Ì¹
+” Ìß” Ìß” Ìß”  Ìß–” Ì¹” Ì¹
+” Ìà”" Ìà”# Ìà”, Ìà•” Ìº” Ìº
+” Ìº” Ìº”# Ìº” Ì¼” Ì¼
+” Ì¼” Ì¼” Ì¼”  Ì¼”' Ì¼!”) Ì¼#”- Ì¼'”. Ì¼(”2 Ì¼,”3 Ì¼-”: Ì¼4”< Ì¼6•” Ì½” Ì½” Ì½”" Ì½”/ Ì½‘” Ì¾‘” Ì¾” Ì¿” Ì¿”' Ì¿”) Ì¿”3 Ì¿”> Ì¿”ÌC Ì¿%”ÌM Ì¿/”Ìj Ì¿”Ìo Ì¿%”Ìy Ì¿/”Ì‰ Ì¿/”Ì‹ Ì¿1œ” Ì¿” Ì¿”  ÌÚ	”, ÌÚ”- ÌÚ”0 ÌÚ”2 ÌÚ”3 ÌÚ”7 ÌÚ ”8 ÌÚ!”ÌA ÌÚ*”ÌC ÌÚ,–” Ì¿” Ì¿”  ÌÛ	”, ÌÛ”- ÌÛ”. ÌÛ’” ÌÀ
+” ÌÀ–” ÌÀ
+” ÌÀ” ÌÖ”" ÌÖ”# ÌÖ”) ÌÖ” ÌÀ
+” ÌÀ” Ì×”$ Ì×”% Ì×”' Ì×”+ Ì×”- Ì×”/ Ì×”1 Ì×”6 Ì×$”8 Ì×&”: Ì×(”< Ì×*œ” ÌÀ
+” ÌÀ” ÌØ”' ÌØ”( ÌØ”+ ÌØ”- ÌØ”. ÌØ”2 ÌØ ”3 ÌØ!”= ÌØ+”? ÌØ-’”ÌE ÌÁ9”ÌJ ÌÁÌF˜”( ÌÃ”, ÌÃ”0 ÌÃ”1 ÌÃ”5 ÌÃ”: ÌÃ"”; ÌÃ#”= ÌÃ%•”? ÌÊ”ÌF ÌÊ”ÌG ÌÊ”ÌJ ÌÊ ”ÌL ÌÊ"š”8 ÌË”> ÌË”Ì@ ÌË”ÌC ÌË!”ÌG ÌË%”ÌH ÌË&”ÌM ÌË+”ÌO ÌË-”ÌQ ÌË/”ÌR ÌË0””8 ÌÌ”< ÌÌ”> ÌÌ”Ì@ ÌÌÜ ”< ÌÍ”ÌB ÌÍ”ÌC ÌÍ”ÌJ ÌÍ&”ÌK ÌÍ'”ÌM ÌÍ)”ÌP ÌÍ,”ÌR ÌÍ.”Ìi ÌÍÌE”Ìk ÌÍÌG”Ìq ÌÍÌM”Ìs ÌÍÌO”Ìu ÌÍÌQ”Ìw ÌÍÌS”Ìy ÌÍÌU”Ì{ ÌÍÌW”Ì} ÌÍÌY”Ì ÌÍÌ[”Ì€ ÌÍÌ\”Ì ÌÍÌ]‘”9 ÌÎ’”4 ÌÏ”5 ÌÏ“”ÌT ÌÄ”Ì] ÌÄ”Ìd ÌÄ–”Ì@ ÌÅ”ÌE ÌÅ”ÌG ÌÅ”ÌK ÌÅ”ÌL ÌÅ ”ÌQ ÌÅ%—”Ì@ ÌÆ”ÌI ÌÆ”ÌK ÌÆ”ÌL ÌÆ ”ÌR ÌÆ.”ÌT ÌÆ0”ÌV ÌÆ2”ÌD ÌÇ”ÌJ ÌÇ”ÌK ÌÇ”ÌO ÌÇ!”ÌP ÌÇ"”ÌT ÌÇ&”ÌU ÌÇ'”Ìa ÌÇ3”Ìc ÌÇ5”Ìe ÌÇ7”Ìk ÌÇ=”Ìl ÌÇ>”Ìm ÌÇ?’”Ì@ ÌÈ”ÌA ÌÈ‘”= ÌÉ–”ÌD ÌÅ”ÌI ÌÅ”ÌK ÌÅ”ÌO ÌÅ”ÌP ÌÅ ”ÌU ÌÅ%—”ÌD ÌÆ”ÌM ÌÆ”ÌO ÌÆ”ÌP ÌÆ ”ÌV ÌÆ.”ÌX ÌÆ0”ÌZ ÌÆ2”ÌH ÌÇ”ÌN ÌÇ”ÌO ÌÇ”ÌS ÌÇ!”ÌT ÌÇ"”ÌX ÌÇ&”ÌY ÌÇ'”Ìe ÌÇ3”Ìg ÌÇ5”Ìi ÌÇ7”Ìo ÌÇ=”Ìp ÌÇ>”Ìq ÌÇ?’”ÌD ÌÈ”ÌE ÌÈ‘”) ÌĞ‘”- ÌĞš”ÌT ÌÑ”Ì` ÌÑ”Ìg ÌÑ”Ìi ÌÑ!”Ìk ÌÑ#”Ìm ÌÑ%”Ìq ÌÑ)”Ìr ÌÑ*”Ìt ÌÑ,”Ìv ÌÑ.–”ÌD ÌÑ!”ÌF ÌÑ#”ÌH ÌÑ%”ÌL ÌÑ)”ÌM ÌÑ*”ÌO ÌÑ,‘”) ÌÒ’”$ ÌÂ”, ÌÂÜ ”8 ÌÔ”9 ÌÔ”= ÌÔ”? ÌÔ”ÌD ÌÔ,”ÌF ÌÔ.”ÌH ÌÔ0”ÌI ÌÔ1”ÌL ÌÔ4”ÌP ÌÔ8”ÌQ ÌÔ9”ÌU ÌÔ=”ÌY ÌÔÌA”Ì^ ÌÔÌF”Ìb ÌÔÌJ”Ìf ÌÔÌN”Ìg ÌÔÌO”Ìl ÌÔÌT”Ìn ÌÔÌV”Ìp ÌÔÌX”Ìt ÌÔÌ\”Ìx ÌÔÌ`”Ìz ÌÔÌb””6 ÌÁ”: ÌÁ”; ÌÁ”ÌE ÌÁ'’” ÌÁ”# ÌÁ’” ÌÀ
+” ÌÀ’” Ì¿” Ì¿‘” ÌÜ’” Ì¹” Ì¹
+‘” ÌáÔrH–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ’‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌĞ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  Ìİ ‘”  ÌŞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìğ ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìı ‘”  Ìş ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í‘ ÔrI’§missing¦pluginÃ¦genAbcÂÔ  ÔrJ”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCache™ÔrK•¤type¥start£endªspecifiers¦source±ImportDeclarationÌ€Ì¢‘ÔrL”¤type¥start£end¥local¶ImportDefaultSpecifierÌ‡ÌÔrM”¤type¥start£end¤nameªIdentifierÌ‡Ì¦routerÔrN•¤type¥start£end¥value£raw§LiteralÌ“Ì¡¬@ohos.router®"@ohos.router"K±ImportDeclarationÌ¤ÌÔ‘ÔrO•¤type¥start£end¨imported¥local¯ImportSpecifierÌ­ÌµMªIdentifierÌ­Ìµ¨TopicApiMªIdentifierÌ­Ìµ¨TopicApiN§LiteralÌ½ÌÓ´../services/TopicApi¶'../services/TopicApi'K±ImportDeclarationÌÖÍ‘O¯ImportSpecifierÌßÌèMªIdentifierÌßÌè©AdServiceMªIdentifierÌßÌè©AdServiceN§LiteralÌğÍµ../services/AdService·'../services/AdService'K±ImportDeclarationÍ
+Í5‘O¯ImportSpecifierÍÍMªIdentifierÍÍ¥AdIdsMªIdentifierÍÍ¥AdIdsN§LiteralÍ Í4²../constants/AdIds´'../constants/AdIds'K±ImportDeclarationÍ7Í^‘O¯ImportSpecifierÍ@ÍEMªIdentifierÍ@ÍE¥StoreMªIdentifierÍ@ÍE¥StoreN§LiteralÍMÍ]®../utils/Store°'../utils/Store'K±ImportDeclarationÍ`Í‰‘O¯ImportSpecifierÍiÍoMªIdentifierÍiÍo¦DialerMªIdentifierÍiÍo¦DialerN§LiteralÍwÍˆ¯../utils/Dialer±'../utils/Dialer'K±ImportDeclarationÍ‹ÍÏ’O¯ImportSpecifierÍ”Í›MªIdentifierÍ”Í›§ListRowMªIdentifierÍ”Í›§ListRowO¯ImportSpecifierÍÍ¬MªIdentifierÍÍ¬¯TopicDataSourceMªIdentifierÍÍ¬¯TopicDataSourceN§LiteralÍ´ÍÎ¸../utils/TopicDataSourceº'../utils/TopicDataSource'K±ImportDeclarationÍÑÍ‘O¯ImportSpecifierÍÚÍãMªIdentifierÍÚÍã©TopicCardMªIdentifierÍÚÍã©TopicCardN§LiteralÍëÍ·../components/TopicCard¹'../components/TopicCard'K±ImportDeclarationÍÍA‘O¯ImportSpecifierÍÍMªIdentifierÍÍ¬NativeAdCardMªIdentifierÍÍ¬NativeAdCardN§LiteralÍ$Í@º../components/NativeAdCard¼'../components/NativeAdCard'
