@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "工蜂招工找活平台元服务"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "工蜂招工找活平台"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "工蜂招工找活平台"
+    },
+    {
+      "name": "reason_tracking",
+      "value": "用于向您展示更相关的广告内容"
+    }
+  ]
+}

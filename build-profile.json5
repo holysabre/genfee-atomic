@@ -1,0 +1,49 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "release",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "/Users/pange/.ohos/config/release_worker-bee-atomic-service_UGBMFrIk8ClN4DWTdamDTiJWeTmkqHb0tKYjOT6d1uk=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BBDD356DBC3BA15F90DE4E13F0BD84D3257369DB366B599C2EE924447BA65C3A184D313FF49CD35",
+          "profile": "/Users/pange/.ohos/config/release_worker-bee-atomic-service_UGBMFrIk8ClN4DWTdamDTiJWeTmkqHb0tKYjOT6d1uk=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "/Users/pange/.ohos/config/release_worker-bee-atomic-service_UGBMFrIk8ClN4DWTdamDTiJWeTmkqHb0tKYjOT6d1uk=.p12",
+          "storePassword": "0000001BEC2D9A763D99C34B572B21ADF4D90B010388FB36C742300FE1C8AC265AE4C6AA0939FC6F333AE5"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "release",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS"
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
