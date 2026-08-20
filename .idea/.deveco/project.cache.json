@@ -1,16 +1,16 @@
 {
 	"CommonInfo":{
 		"project.ide.version":"6.1.1.300",
-		"current.select.product":"default",
-		"current.select.buildMode":"",
+		"current.select.product":"debug",
+		"current.select.buildMode":"debug",
 		"crossplatform.projectType":""
 	},
 	"BuildOptions":{
-		"SELECT_BUILD_PRODUCT":"default",
-		"BUNDLE_NAME":"com.atomicservice.6917612394359487010",
+		"SELECT_BUILD_PRODUCT":"debug",
+		"BUNDLE_NAME":"com.atomicservice.6917614059205018261",
 		"BUILD_PATH":{
-			"OUTPUT_PATH":"/Users/pange/Codes/genfee/worker-bee-atomic-service/build/outputs/default"
+			"OUTPUT_PATH":"/Users/pange/Codes/genfee/worker-bee-atomic-service/build/outputs/debug"
 		},
-		"SELECT_BUILD_MODE":""
+		"SELECT_BUILD_MODE":"debug"
 	}
 }

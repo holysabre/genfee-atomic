@@ -28,7 +28,7 @@ export struct TopicCard {
         Text(this.topic?.salary ?? '')
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#FD7272')
+          .fontColor('#D62828')
       }
       .width('100%')
       .margin({ bottom: 8 })
@@ -44,7 +44,7 @@ export struct TopicCard {
       // 企业
       Text(this.topic?.company_name ?? '')
         .fontSize(12)
-        .fontColor('#4D222222')
+        .fontColor('#595959')
         .width('100%')
         .margin({ bottom: 8 })
 
@@ -56,18 +56,18 @@ export struct TopicCard {
           .margin({ right: 2 })
         Text(this.topic?.address ?? '')
           .fontSize(12)
-          .fontColor('#4D222222')
+          .fontColor('#595959')
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         Text('立刻联系')
           .fontSize(12)
-          .fontColor('#FFC900')
+          .fontColor('#A67C00')
           .textAlign(TextAlign.Center)
           .width(65)
           .height(25)
           .borderRadius(13)
-          .border({ width: 1, color: '#FFE37B' })
+          .border({ width: 1, color: '#A67C00' })
           .onClick(() => {
             const mobile = this.topic?.mobile;
             if (mobile !== undefined && mobile !== null) {

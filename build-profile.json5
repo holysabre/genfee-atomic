@@ -6,12 +6,25 @@
         "type": "HarmonyOS",
         "material": {
           "storeFile": "/Users/pange/Codes/genfee/genfee_release.p12",
-          "storePassword": "0000001AAF8771D2132B2B3DE7ADF81101B762C107B69C8428C4499AA088AED3194C1AB1AFD887E6DBEA",
+          "storePassword": "0000001A04F0500E2BF25D8E617E6E3CFD5324018D99B0322A9CEF522B76E12FBF3B2634DA02C4665D84",
           "keyAlias": "genfee",
-          "keyPassword": "0000001AFFC90CF3B575FA6F0A448B598A900E89D777983060FD67CFC0FF3A8642DB2D02EC0BEE260612",
+          "keyPassword": "0000001A919C0FC4BD04AF7C6C47833AF55567D31D94C8A1739EFE303EEA1B2CA3562BCDB565A7992522",
           "signAlg": "SHA256withECDSA",
-          "profile": "/Users/pange/Codes/genfee/genfee_releaseRelease.p7b",
+          "profile": "/Users/pange/Codes/genfee/genfee_profileRelease.p7b",
           "certpath": "/Users/pange/Codes/genfee/genfee_release.cer"
+        }
+      },
+      {
+        "name": "debug",
+        "type": "HarmonyOS",
+        "material": {
+          "storeFile": "/Users/pange/Codes/genfee/genfee_debug.p12",
+          "storePassword": "0000001A78E821151F8CB0858D3B5121E422F18D0FF8347D650DFAA5B52072950330936903C4FE026EB5",
+          "keyAlias": "genfee",
+          "keyPassword": "0000001AE30715A35178DE49B7A6A7251CD3FEB289DE87A5E23276E68348C1B790157E58B78597BB28AE",
+          "signAlg": "SHA256withECDSA",
+          "profile": "/Users/pange/Codes/genfee/genfee_debugDebug.p7b",
+          "certpath": "/Users/pange/Codes/genfee/genfee_debug.cer"
         }
       }
     ],
@@ -21,11 +34,20 @@
         "signingConfig": "release",
         "compatibleSdkVersion": "5.0.0(12)",
         "runtimeOS": "HarmonyOS"
+      },
+      {
+        "name": "debug",
+        "signingConfig": "debug",
+        "compatibleSdkVersion": "5.0.0(12)",
+        "runtimeOS": "HarmonyOS"
       }
     ],
     "buildModeSet": [
       {
         "name": "release"
+      },
+      {
+        "name": "debug"
       }
     ]
   },
@@ -37,9 +59,10 @@
         {
           "name": "default",
           "applyToProducts": [
-            "default"
+            "default",
+            "debug"
           ]
-        }
+        },
       ]
     }
   ]

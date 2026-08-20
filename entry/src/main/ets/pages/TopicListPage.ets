@@ -12,6 +12,7 @@ import { NativeAdCard } from '../components/NativeAdCard';
 
 const PAGE_SIZE: number = 10;
 const AD_INSERT_POS: number = 8; // 每批帖子第 8 条后插入 1 条原生广告
+const CAPSULE_MARGIN_RIGHT: number = 96; // 元服务胶囊占位宽度（避免内容/标题与胶囊重叠）
 
 @Entry
 @Component
@@ -20,6 +21,7 @@ struct TopicListPage {
   @State private refreshing: boolean = false;
   @State private address: string = '全国'; // 简化版固定全国（无地区选择页）
   @State private statusBarHeight: number = 0;
+  @State private navBarHeight: number = 0; // 底部导航条避让高度（审核整改）
 
   private page: number = 1;
   private pageTotal: number = -1;
@@ -27,6 +29,7 @@ struct TopicListPage {
 
   aboutToAppear(): void {
     this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
+    this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
     // 合规：首次启动必须先获得隐私协议同意，同意后才请求数据与广告
     if (Store.getBool('privacy_agreed', false)) {
       this.loadList(true, true);
@@ -42,8 +45,8 @@ struct TopicListPage {
       message: '感谢您使用工蜂招工找活平台。我们将严格遵守法律法规，保护您的个人信息安全。' +
         '我们会基于网络状态加载招聘信息，并在您同意后展示广告内容。请您仔细阅读并同意《用户协议》和《隐私政策》后继续使用。',
       buttons: [
-        { text: '同意', color: '#FFC900' },
-        { text: '不同意', color: '#888888' }
+        { text: '同意', color: '#A67C00' },
+        { text: '不同意', color: '#595959' }
       ]
     }).then((result) => {
       if (result.index === 0) {
@@ -118,51 +121,54 @@ struct TopicListPage {
     }
   }
 
+  /** 一级标题栏：仅 1 个文字元素，高度 ≥44vp，字号 ≥20fp 加粗，右侧留出胶囊占位 */
   @Builder
-  headerBar() {
-    Column() {
-      // logo + 标题（还原小程序自定义导航栏）
-      Row() {
-        Image($r('app.media.avatar'))
-          .width(30)
-          .height(30)
-          .borderRadius(15)
-          .margin({ right: 8 })
-        Text('工蜂招工找活平台')
-          .fontSize(14)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#222222')
-      }
-      .width('100%')
-      .height(38)
-      .padding({ left: 10, right: 10 })
-
-      // 地区（静态"全国"）+ 中部 tabs 图
-      Stack() {
-        Row() {
-          Text(this.address)
-            .fontSize(12)
-            .fontColor('#222222')
-            .margin({ left: 10 })
-        }
-        .width('100%')
-
-        Row() {
-          Image($r('app.media.zzrz'))
-            .width('100%')
-            .height('100%')
-        }
-        .width(177)
-        .height(24)
-        .backgroundColor(Color.White)
-        .borderRadius(12)
-      }
-      .alignContent(Alignment.Center)
-      .width('100%')
-      .height(36)
+  titleBar() {
+    Row() {
+      // 左侧与右侧占位等宽，使标题在视觉中心与胶囊水平中心对齐
+      Blank()
+        .width(CAPSULE_MARGIN_RIGHT)
+      Text('工蜂招工找活平台')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#222222')
+        .textAlign(TextAlign.Center)
+        .layoutWeight(1)
+      Blank()
+        .width(CAPSULE_MARGIN_RIGHT)
     }
     .width('100%')
+    .height(this.statusBarHeight + 44)
     .padding({ top: this.statusBarHeight })
+    .backgroundColor('#B0CBEB')
+  }
+
+  @Builder
+  filterBar() {
+    // 原标题栏中的"全国"+tabs 图下移到内容区，避免占用胶囊区域
+    Stack() {
+      Row() {
+        Text(this.address)
+          .fontSize(12)
+          .fontColor('#222222')
+          .margin({ left: 10 })
+      }
+      .width('100%')
+
+      Row() {
+        Image($r('app.media.zzrz'))
+          .width('100%')
+          .height('100%')
+      }
+      .width(177)
+      .height(24)
+      .backgroundColor(Color.White)
+      .borderRadius(12)
+    }
+    .alignContent(Alignment.Center)
+    .width('100%')
+    .height(36)
+    .padding({ left: 20, right: 20 })
     .backgroundColor('#B0CBEB')
   }
 
@@ -184,7 +190,8 @@ struct TopicListPage {
 
   build() {
     Column() {
-      this.headerBar()
+      this.titleBar()
+      this.filterBar()
 
       if (this.dataSource.isEmpty() && !this.loading) {
         this.emptyView()
@@ -213,7 +220,8 @@ struct TopicListPage {
             }, (item: ListRow, index: number) => `${item.kind}_${index}_${item.topic?.id ?? 'ad'}`)
           }
           .width('100%')
-          .padding({ left: 20, right: 20 })
+          // 审核整改：底部 padding 避让导航条，滚动到底部时最后一条卡片不被遮挡
+          .padding({ left: 20, right: 20, bottom: this.navBarHeight })
           .onReachEnd(() => this.onReachEnd())
         }
         .onRefreshing(() => this.onRefresh())

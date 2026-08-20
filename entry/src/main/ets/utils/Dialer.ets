@@ -27,8 +27,8 @@ export class Dialer {
       title: '联系电话',
       message: mobile,
       buttons: [
-        { text: '复制号码', color: '#FFC900' },
-        { text: '取消', color: '#888888' }
+        { text: '复制号码', color: '#A67C00' },
+        { text: '取消', color: '#595959' }
       ]
     }).then((result) => {
       if (result.index === 0) {

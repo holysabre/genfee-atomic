@@ -10,27 +10,27 @@
           "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/resources"
         ],
         "BUILD_PATH": {
-          "OUTPUT_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/outputs/default",
-          "INTERMEDIA_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates",
-          "JS_ASSETS_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/loader_out/default",
-          "JS_LITE_ASSETS_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/loader_out_lite/default",
-          "RES_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/res/default",
-          "RES_PROFILE_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/res/default/resources/base/profile",
-          "ETS_SUPER_VISUAL_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/cache/default/default@CompileArkTS/esmodule",
-          "JS_SUPER_VISUAL_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/cache/default/default@CompileJS/jsbundle",
-          "WORKER_LOADER": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/loader/default/loader.json",
-          "MANIFEST_JSON": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/manifest/default",
-          "OUTPUT_METADATA_JSON": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/hap_metadata/default/output_metadata.json",
-          "SOURCE_MAP_DIR": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/default/intermediates/source_map/default"
+          "OUTPUT_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/outputs/default",
+          "INTERMEDIA_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates",
+          "JS_ASSETS_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/loader_out/default",
+          "JS_LITE_ASSETS_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/loader_out_lite/default",
+          "RES_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/res/default",
+          "RES_PROFILE_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/res/default/resources/base/profile",
+          "ETS_SUPER_VISUAL_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/cache/default/default@CompileArkTS/esmodule",
+          "JS_SUPER_VISUAL_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/cache/default/default@CompileJS/jsbundle",
+          "WORKER_LOADER": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/loader/default/loader.json",
+          "MANIFEST_JSON": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/manifest/default",
+          "OUTPUT_METADATA_JSON": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/hap_metadata/default/output_metadata.json",
+          "SOURCE_MAP_DIR": "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/build/debug/intermediates/source_map/default"
         },
         "BUILD_OPTION": {
-          "debuggable": false
+          "debuggable": true
         }
       }
     },
     "BUILD_OPTION": {
-      "default-default": {
-        "debuggable": false,
+      "debug-default": {
+        "debuggable": true,
         "copyFrom": "default"
       }
     },
@@ -46,13 +46,13 @@
     "BUILD_CACHE_DIR": ""
   },
   "ohos-project": {
-    "SELECT_PRODUCT_NAME": "default",
+    "SELECT_PRODUCT_NAME": "debug",
     "MODULE_BUILD_DIR": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build",
-    "BUNDLE_NAME": "com.atomicservice.6917612394359487010",
-    "VERSION_CODE": 1000001,
-    "VERSION_NAME": "1.0.1",
+    "BUNDLE_NAME": "com.atomicservice.6917614059205018261",
+    "VERSION_CODE": 1000000,
+    "VERSION_NAME": "1.0.0",
     "BUILD_PATH": {
-      "OUTPUT_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build/outputs/default"
+      "OUTPUT_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build/outputs/debug"
     },
     "MODULES": [
       {
@@ -62,7 +62,8 @@
           {
             "name": "default",
             "applyToProducts": [
-              "default"
+              "default",
+              "debug"
             ]
           }
         ],
@@ -77,12 +78,25 @@
             "type": "HarmonyOS",
             "material": {
               "storeFile": "/Users/pange/Codes/genfee/genfee_release.p12",
-              "storePassword": "0000001AAF8771D2132B2B3DE7ADF81101B762C107B69C8428C4499AA088AED3194C1AB1AFD887E6DBEA",
+              "storePassword": "0000001A04F0500E2BF25D8E617E6E3CFD5324018D99B0322A9CEF522B76E12FBF3B2634DA02C4665D84",
               "keyAlias": "genfee",
-              "keyPassword": "0000001AFFC90CF3B575FA6F0A448B598A900E89D777983060FD67CFC0FF3A8642DB2D02EC0BEE260612",
+              "keyPassword": "0000001A919C0FC4BD04AF7C6C47833AF55567D31D94C8A1739EFE303EEA1B2CA3562BCDB565A7992522",
               "signAlg": "SHA256withECDSA",
-              "profile": "/Users/pange/Codes/genfee/genfee_releaseRelease.p7b",
+              "profile": "/Users/pange/Codes/genfee/genfee_profileRelease.p7b",
               "certpath": "/Users/pange/Codes/genfee/genfee_release.cer"
+            }
+          },
+          {
+            "name": "debug",
+            "type": "HarmonyOS",
+            "material": {
+              "storeFile": "/Users/pange/Codes/genfee/genfee_debug.p12",
+              "storePassword": "0000001A78E821151F8CB0858D3B5121E422F18D0FF8347D650DFAA5B52072950330936903C4FE026EB5",
+              "keyAlias": "genfee",
+              "keyPassword": "0000001AE30715A35178DE49B7A6A7251CD3FEB289DE87A5E23276E68348C1B790157E58B78597BB28AE",
+              "signAlg": "SHA256withECDSA",
+              "profile": "/Users/pange/Codes/genfee/genfee_debugDebug.p7b",
+              "certpath": "/Users/pange/Codes/genfee/genfee_debug.cer"
             }
           }
         ],
@@ -92,11 +106,20 @@
             "signingConfig": "release",
             "compatibleSdkVersion": "5.0.0(12)",
             "runtimeOS": "HarmonyOS"
+          },
+          {
+            "name": "debug",
+            "signingConfig": "debug",
+            "compatibleSdkVersion": "5.0.0(12)",
+            "runtimeOS": "HarmonyOS"
           }
         ],
         "buildModeSet": [
           {
             "name": "release"
+          },
+          {
+            "name": "debug"
           }
         ]
       },
@@ -108,7 +131,8 @@
             {
               "name": "default",
               "applyToProducts": [
-                "default"
+                "default",
+                "debug"
               ]
             }
           ]

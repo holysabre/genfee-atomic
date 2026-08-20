@@ -1,24 +1,39 @@
 import { router } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { Topic, TopicApi } from '../services/TopicApi';
 import { Dialer } from '../utils/Dialer';
 import { BannerAdView } from '../components/BannerAdView';
 import { AdIds } from '../constants/AdIds';
+import { AdService } from '../services/AdService';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { advertising } from '@kit.AdsKit';
 
-/** 详情页（1:1 还原小程序版：白底、标签、底部固定操作区 + Banner 广告） */
+const CAPSULE_MARGIN_RIGHT: number = 96; // 元服务胶囊占位宽度
+const INTERSTITIAL_SHOWN_KEY: string = 'interstitial_shown_in_session';
+
+/** 详情页（自绘标题栏带返回图片，满足胶囊规范） */
 @Entry
 @Component
 struct TopicDetailPage {
   @State private info: Topic | null = null;
   @State private tags: string[] = [];
   @State private statusBarHeight: number = 0;
+  @State private navBarHeight: number = 0; // 底部导航条避让高度（审核整改）
+  @State private rewardGranted: boolean = false; // 激励视频是否已看完
+  @State private adLoading: boolean = false; // 广告加载中状态
+
+  private rewardAd: advertising.Advertisement | null = null;
 
   aboutToAppear(): void {
     this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
+    this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
     const params = router.getParams() as Record<string, number> | undefined;
     const id = params?.id ?? 0;
     if (id > 0) {
       this.loadDetail(id);
     }
+    // 合规：请求/展示广告前必须已获得隐私协议同意（页面层已控制，aboutToAppear 时同意态已确定）
+    this.tryShowInterstitial();
   }
 
   private async loadDetail(id: number): Promise<void> {
@@ -31,12 +46,113 @@ struct TopicDetailPage {
     }
   }
 
+  /** 应用生命周期内最多展示 1 次插屏广告 */
+  private async tryShowInterstitial(): Promise<void> {
+    if (!AdIds.AD_ENABLED) {
+      return;
+    }
+    const alreadyShown = AppStorage.get<boolean>(INTERSTITIAL_SHOWN_KEY) ?? false;
+    if (alreadyShown) {
+      return;
+    }
+    const ad = await AdService.loadInterstitialAd(
+      getContext(this),
+      AdIds.interstitialVideoAdId(),
+      AdIds.interstitialImageAdId()
+    );
+    if (ad !== null) {
+      AppStorage.setOrCreate(INTERSTITIAL_SHOWN_KEY, true);
+      AdService.showInterstitialAd(getContext(this) as common.UIAbilityContext, ad);
+    }
+  }
+
+  /** 点击免费联系：未看激励视频则先加载并播放，看完才能拨号 */
+  private async onContactClick(): Promise<void> {
+    if (this.rewardGranted) {
+      this.doDial();
+      return;
+    }
+    if (this.adLoading) {
+      return;
+    }
+    if (!AdIds.AD_ENABLED) {
+      // 广告总开关关闭时直接允许联系
+      this.doDial();
+      return;
+    }
+
+    this.adLoading = true;
+    try {
+      const ad = await AdService.loadRewardAd(getContext(this), AdIds.rewardAdId());
+      if (ad === null) {
+        this.getUIContext().getPromptAction().showToast({ message: '广告加载失败，请稍后重试' });
+        return;
+      }
+      this.rewardAd = ad;
+      AdService.showRewardAd(getContext(this) as common.UIAbilityContext, ad, {
+        onReward: () => {
+          this.rewardGranted = true;
+          this.getUIContext().getPromptAction().showToast({ message: '已获得免费联系权限' });
+        },
+        onClose: () => {
+          if (this.rewardGranted) {
+            this.doDial();
+          }
+        },
+        onError: (code: number, msg: string) => {
+          hilog.error(0x0000, 'WorkerBeeAd', 'reward show error code=%{public}d msg=%{public}s', code, msg);
+          this.getUIContext().getPromptAction().showToast({ message: '广告播放失败，请稍后重试' });
+        }
+      });
+    } finally {
+      this.adLoading = false;
+    }
+  }
+
+  private doDial(): void {
+    const mobile = this.info?.mobile;
+    if (mobile !== undefined && mobile !== null) {
+      Dialer.dial(this.getUIContext(), String(mobile));
+    }
+  }
+
+  /** 二级标题栏：返回图片 + 标题，共 2 个元素；右侧留出胶囊占位 */
+  @Builder
+  titleBar() {
+    Row() {
+      Row() {
+        Image($r('app.media.back'))
+          .width(24)
+          .height(24)
+          .onClick(() => {
+            router.back();
+          })
+      }
+      .width(CAPSULE_MARGIN_RIGHT)
+      .justifyContent(FlexAlign.Start)
+
+      Text('内容详情')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#222222')
+        .textAlign(TextAlign.Center)
+        .layoutWeight(1)
+
+      Blank()
+        .width(CAPSULE_MARGIN_RIGHT)
+    }
+    .width('100%')
+    .height(this.statusBarHeight + 44)
+    .padding({ top: this.statusBarHeight })
+    .backgroundColor(Color.White)
+  }
+
   @Builder
   labelRow(label: string, value: string, valueColor: string, bold: boolean) {
     Row() {
       Text(label)
         .fontSize(14)
-        .fontColor('#80222222')
+        .fontColor('#595959')
       Text(value)
         .fontSize(14)
         .fontColor(valueColor)
@@ -48,121 +164,124 @@ struct TopicDetailPage {
   }
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
-      // 内容区
-      Scroll() {
-        Column() {
-          // 需求职业标签
-          Row() {
-            Text('需求职业：')
-              .fontSize(14)
-              .fontColor('#80222222')
-            Flex({ wrap: FlexWrap.Wrap }) {
-              ForEach(this.tags, (tag: string) => {
-                Text(tag)
-                  .fontSize(13)
-                  .fontColor('#FAC23C')
-                  .height(20)
-                  .padding({ left: 12, right: 12 })
-                  .borderRadius(13)
-                  .border({ width: 1, color: '#FAC23C' })
-                  .margin({ right: 10, bottom: 10 })
-              })
-            }
-            .layoutWeight(1)
-          }
-          .width('100%')
-          .alignItems(VerticalAlign.Top)
-          .margin({ bottom: 10 })
+    Column() {
+      this.titleBar()
 
-          // 要求 + 发布时间 + 内容 + 地址
+      Stack({ alignContent: Alignment.Bottom }) {
+        // 内容区
+        Scroll() {
           Column() {
+            // 需求职业标签
             Row() {
-              Text('要求：')
+              Text('需求职业：')
                 .fontSize(14)
-                .fontColor('#80222222')
-              Text(`发布时间：${this.info?.created_at ?? '暂无'}`)
-                .fontSize(12)
-                .fontColor('#80222222')
+                .fontColor('#595959')
+              Flex({ wrap: FlexWrap.Wrap }) {
+                ForEach(this.tags, (tag: string) => {
+                  Text(tag)
+                    .fontSize(13)
+                    .fontColor('#A67C00')
+                    .height(20)
+                    .padding({ left: 12, right: 12 })
+                    .borderRadius(13)
+                    .border({ width: 1, color: '#A67C00' })
+                    .margin({ right: 10, bottom: 10 })
+                })
+              }
+              .layoutWeight(1)
             }
             .width('100%')
-            .justifyContent(FlexAlign.SpaceBetween)
+            .alignItems(VerticalAlign.Top)
+            .margin({ bottom: 10 })
 
-            Text(this.info?.content ?? '')
-              .fontSize(14)
-              .fontColor('#222222')
-              .lineHeight(24)
+            // 要求 + 发布时间 + 内容 + 地址
+            Column() {
+              Row() {
+                Text('要求：')
+                  .fontSize(14)
+                  .fontColor('#595959')
+                Text(`发布时间：${this.info?.created_at ?? '暂无'}`)
+                  .fontSize(12)
+                  .fontColor('#595959')
+              }
               .width('100%')
-              .margin({ top: 8, bottom: 10 })
+              .justifyContent(FlexAlign.SpaceBetween)
 
-            Row() {
-              Image($r('app.media.address2'))
-                .width(12)
-                .height(12)
-                .margin({ right: 4 })
-              Text(this.info?.address ?? '')
+              Text(this.info?.content ?? '')
                 .fontSize(14)
-                .fontColor('#80222222')
+                .fontColor('#222222')
+                .lineHeight(24)
+                .width('100%')
+                .margin({ top: 8, bottom: 10 })
+
+              Row() {
+                Image($r('app.media.address2'))
+                  .width(12)
+                  .height(12)
+                  .margin({ right: 4 })
+                Text(this.info?.address ?? '')
+                  .fontSize(14)
+                  .fontColor('#595959')
+              }
+              .width('100%')
             }
             .width('100%')
+            .margin({ bottom: 10 })
+
+            // party != 2（招工）才展示薪酬/企业/收费说明
+            if ((this.info?.party ?? 1) !== 2) {
+              this.labelRow('薪酬范围：', this.info?.salary ?? '暂无', '#A67C00', true)
+              this.labelRow('企业单位：', this.info?.company_name ?? '暂无', '#222222', false)
+              this.labelRow('岗位收费要求：', '该岗位招聘不涉及收费', '#222222', false)
+            }
           }
           .width('100%')
-          .margin({ bottom: 10 })
-
-          // party != 2（招工）才展示薪酬/企业/收费说明
-          if ((this.info?.party ?? 1) !== 2) {
-            this.labelRow('薪酬范围：', this.info?.salary ?? '暂无', '#FFC900', true)
-            this.labelRow('企业单位：', this.info?.company_name ?? '暂无', '#222222', false)
-            this.labelRow('岗位收费要求：', '该岗位招聘不涉及收费', '#222222', false)
-          }
+          // 审核整改：内容区底部留白 = 固定操作区高度 + 导航条高度，滚到底不被遮挡
+          .padding({ left: 16, right: 16, top: 14, bottom: 150 + this.navBarHeight })
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 14, bottom: 150 })
+        .height('100%')
+
+        // 底部固定操作区（温馨提示 + Banner 广告 + 免费联系）
+        Column() {
+          Row() {
+            Image($r('app.media.warn'))
+              .width(24)
+              .height(24)
+            Text('温馨提示')
+              .fontSize(12)
+              .fontColor('#A67C00')
+          }
+          .margin({ bottom: 3 })
+
+          Text('联系之前请您注意辨别信息真伪，核实岗位实情及实际情况，谨防上当受骗。平台不参与招聘事宜，相关招聘及履约问题由招聘双方确认并担责。')
+            .fontSize(10)
+            .fontColor('#666666')
+            .width('100%')
+            .margin({ bottom: 10 })
+
+          if (AdIds.AD_ENABLED) {
+            BannerAdView()
+              .margin({ bottom: 8 })
+          }
+
+          Text(this.rewardGranted ? '免费联系' : (this.adLoading ? '广告加载中...' : '观看视频后免费联系'))
+            .fontSize(15)
+            .fontColor('#000000')
+            .textAlign(TextAlign.Center)
+            .width('100%')
+            .height(44)
+            .backgroundColor('#FDD000')
+            .borderRadius(8)
+            .onClick(() => this.onContactClick())
+        }
+        .width('100%')
+        // 审核整改：底部固定区整体抬高避让导航条，白色背景延伸进导航条区域形成沉浸融合
+        .padding({ left: 17, right: 17, top: 10, bottom: 15 + this.navBarHeight })
+        .backgroundColor(Color.White)
       }
       .width('100%')
-      .height('100%')
-      .padding({ top: this.statusBarHeight })
-
-      // 底部固定操作区（温馨提示 + Banner 广告 + 免费联系）
-      Column() {
-        Row() {
-          Image($r('app.media.warn'))
-            .width(24)
-            .height(24)
-          Text('温馨提示')
-            .fontSize(12)
-            .fontColor('#FDD000')
-        }
-        .margin({ bottom: 3 })
-
-        Text('联系之前请您注意辨别信息真伪，核实岗位实情及实际情况，谨防上当受骗。平台不参与招聘事宜，相关招聘及履约问题由招聘双方确认并担责。')
-          .fontSize(10)
-          .fontColor('#666666')
-          .width('100%')
-          .margin({ bottom: 10 })
-
-        if (AdIds.AD_ENABLED) {
-          BannerAdView()
-            .margin({ bottom: 8 })
-        }
-
-        Text('免费联系')
-          .fontSize(15)
-          .fontColor('#000000')
-          .textAlign(TextAlign.Center)
-          .width('100%')
-          .height(44)
-          .backgroundColor('#FDD000')
-          .borderRadius(8)
-          .onClick(() => {
-            const mobile = this.info?.mobile;
-            if (mobile !== undefined && mobile !== null) {
-              Dialer.dial(this.getUIContext(), String(mobile));
-            }
-          })
-      }
-      .width('100%')
-      .padding({ left: 17, right: 17, top: 10, bottom: 15 })
+      .layoutWeight(1)
       .backgroundColor(Color.White)
     }
     .width('100%')
