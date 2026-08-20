@@ -5,14 +5,13 @@ import { AdIds } from '../constants/AdIds';
 /**
  * Banner 广告（详情页底部）：
  * 使用 AutoAdComponent —— 自动请求/轮播/上报，最省事。
- * ⚠️ 联调校准点：adType=0 为横幅（若返回错误码，按当时官方文档校准类型值）。
  */
 @Component
 export struct BannerAdView {
   @State private visibilityState: Visibility = Visibility.None;
 
   private adParam: advertising.AdRequestParams = {
-    adType: 0, // 横幅
+    adType: 8, // 横幅
     adId: AdIds.bannerAdId(),
     adWidth: 360,
     adHeight: 57

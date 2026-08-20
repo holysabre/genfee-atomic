@@ -19,7 +19,7 @@ export class BannerAdView extends ViewPU {
         }
         this.__visibilityState = new ObservedPropertySimplePU(Visibility.None, this, "visibilityState");
         this.adParam = {
-            adType: 0,
+            adType: 8,
             adId: AdIds.bannerAdId(),
             adWidth: 360,
             adHeight: 57
@@ -102,7 +102,7 @@ export class BannerAdView extends ViewPU {
                                             }
                                         }
                                     }
-                                }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/components/BannerAdView.ets", line: 39, col: 9 });
+                                }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/components/BannerAdView.ets", line: 38, col: 9 });
                                 ViewPU.create(componentCall);
                                 let paramsLambda = () => {
                                     return {

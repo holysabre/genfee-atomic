@@ -21,8 +21,10 @@ struct TopicDetailPage {
   @State private navBarHeight: number = 0; // 底部导航条避让高度（审核整改）
   @State private rewardGranted: boolean = false; // 激励视频是否已看完
   @State private adLoading: boolean = false; // 广告加载中状态
+  @State private rewardCountdown: number = 0; // 激励视频倒计时（秒）
 
   private rewardAd: advertising.Advertisement | null = null;
+  private countdownTimer: number = -1;
 
   aboutToAppear(): void {
     this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
@@ -91,19 +93,20 @@ struct TopicDetailPage {
       this.rewardAd = ad;
       AdService.showRewardAd(getContext(this) as common.UIAbilityContext, ad, {
         onReward: () => {
-          this.rewardGranted = true;
-          this.getUIContext().getPromptAction().showToast({ message: '已获得免费联系权限' });
+          hilog.info(0x0000, 'WorkerBeeAd', 'reward granted callback');
         },
         onClose: () => {
-          if (this.rewardGranted) {
-            this.doDial();
-          }
+          // SDK 未暴露广告关闭回调，倒计时已在 showAd 调用时启动。
+          hilog.info(0x0000, 'WorkerBeeAd', 'reward ad closed, countdown=%{public}d', this.rewardCountdown);
         },
         onError: (code: number, msg: string) => {
           hilog.error(0x0000, 'WorkerBeeAd', 'reward show error code=%{public}d msg=%{public}s', code, msg);
+          this.stopCountdown();
           this.getUIContext().getPromptAction().showToast({ message: '广告播放失败，请稍后重试' });
         }
       });
+      // 激励视频播放后启动倒计时，防止用户直接关闭广告就跳过观看
+      this.startCountdown(10);
     } finally {
       this.adLoading = false;
     }
@@ -114,6 +117,44 @@ struct TopicDetailPage {
     if (mobile !== undefined && mobile !== null) {
       Dialer.dial(this.getUIContext(), String(mobile));
     }
+  }
+
+  private startCountdown(seconds: number): void {
+    this.stopCountdown();
+    this.rewardCountdown = seconds;
+    this.countdownTimer = setInterval(() => {
+      if (this.rewardCountdown > 0) {
+        this.rewardCountdown -= 1;
+      }
+      if (this.rewardCountdown <= 0) {
+        this.rewardGranted = true;
+        this.stopCountdown();
+        this.getUIContext().getPromptAction().showToast({ message: '已获得免费联系权限' });
+      }
+    }, 1000);
+  }
+
+  private stopCountdown(): void {
+    if (this.countdownTimer !== -1) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = -1;
+    }
+    if (!this.rewardGranted) {
+      this.rewardCountdown = 0;
+    }
+  }
+
+  private getContactButtonText(): string {
+    if (this.rewardGranted) {
+      return '免费联系';
+    }
+    if (this.rewardCountdown > 0) {
+      return `观看中 (${this.rewardCountdown}s)`;
+    }
+    if (this.adLoading) {
+      return '广告加载中...';
+    }
+    return '观看视频后免费联系';
   }
 
   /** 二级标题栏：返回图片 + 标题，共 2 个元素；右侧留出胶囊占位 */
@@ -265,7 +306,7 @@ struct TopicDetailPage {
               .margin({ bottom: 8 })
           }
 
-          Text(this.rewardGranted ? '免费联系' : (this.adLoading ? '广告加载中...' : '观看视频后免费联系'))
+          Text(this.getContactButtonText())
             .fontSize(15)
             .fontColor('#000000')
             .textAlign(TextAlign.Center)

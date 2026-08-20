@@ -2,12 +2,13 @@ import advertising from "@ohos:advertising";
 import type common from "@ohos:app.ability.common";
 import hilog from "@ohos:hilog";
 const TAG: string = 'WorkerBeeAd';
-/** 鲸鸿动能广告类型常量（按官方文档校准，若不出广告请核对文档） */
-const AD_TYPE_BANNER: number = 0;
-const AD_TYPE_INTERSTITIAL_IMAGE: number = 2;
+/** 鲸鸿动能广告类型常量（按官方文档校准） */
+const AD_TYPE_SPLASH: number = 1;
 const AD_TYPE_NATIVE: number = 3;
-const AD_TYPE_INTERSTITIAL_VIDEO: number = 4;
-const AD_TYPE_REWARD: number = 5;
+const AD_TYPE_REWARD: number = 7;
+const AD_TYPE_BANNER: number = 8;
+const AD_TYPE_INTERSTITIAL: number = 12;
+const AD_TYPE_ROLL: number = 60;
 /** 激励视频生命周期回调 */
 export interface RewardAdCallbacks {
     onReward?: () => void;
@@ -110,11 +111,12 @@ export class AdService {
             useMobileDataReminder: true
         };
         try {
-            // showAd 为全屏广告展示，通常同步阻塞直到广告关闭；关闭后 ad.rewarded 反映是否已发放奖励
+            // showAd 为全屏广告展示，同步阻塞直到广告关闭
             advertising.showAd(ad, displayOptions, context);
-            if (ad.rewarded) {
-                callbacks.onReward?.();
-            }
+            // 注意：真机测试中发现 showAd 返回后 ad.rewarded/ad.shown 仍为 undefined，
+            // 且 SDK 未暴露激励视频关闭/奖励回调。因此只要 showAd 正常返回（用户已走完广告流程），
+            // 即视为获得奖励。生产环境建议接入服务端验证（rewardVerifyConfig）。
+            callbacks.onReward?.();
             callbacks.onClose?.();
         }
         catch (e) {
@@ -129,14 +131,14 @@ export class AdService {
      */
     static loadInterstitialAd(context: common.Context, videoId: string, imageId: string): Promise<advertising.Advertisement | null> {
         return new Promise((resolve: (ad: advertising.Advertisement | null) => void) => {
-            AdService.loadSingleAd(context, videoId, AD_TYPE_INTERSTITIAL_VIDEO)
+            AdService.loadSingleAd(context, videoId, AD_TYPE_INTERSTITIAL)
                 .then((videoAd: advertising.Advertisement | null) => {
                 if (videoAd !== null) {
                     resolve(videoAd);
                     return;
                 }
-                hilog.info(0x0000, TAG, 'interstitial video failed, fallback to image');
-                return AdService.loadSingleAd(context, imageId, AD_TYPE_INTERSTITIAL_IMAGE);
+                hilog.info(0x0000, TAG, 'interstitial video id failed, fallback to image id');
+                return AdService.loadSingleAd(context, imageId, AD_TYPE_INTERSTITIAL);
             })
                 .then((imageAd: advertising.Advertisement | null | undefined) => {
                 resolve(imageAd ?? null);
