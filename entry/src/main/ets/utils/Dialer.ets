@@ -2,6 +2,7 @@ import { call } from '@kit.TelephonyKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { UIContext } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { Colors } from '../constants/Colors';
 
 /**
  * 拨号（对齐 uni-app 版 dialMobile 策略）：
@@ -27,8 +28,8 @@ export class Dialer {
       title: '联系电话',
       message: mobile,
       buttons: [
-        { text: '复制号码', color: '#A67C00' },
-        { text: '取消', color: '#595959' }
+        { text: '复制号码', color: Colors.PRIMARY_TEXT },
+        { text: '取消', color: Colors.SECONDARY_TEXT }
       ]
     }).then((result) => {
       if (result.index === 0) {

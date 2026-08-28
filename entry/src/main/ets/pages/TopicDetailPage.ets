@@ -7,6 +7,7 @@ import { AdIds } from '../constants/AdIds';
 import { AdService } from '../services/AdService';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { advertising } from '@kit.AdsKit';
+import { Colors } from '../constants/Colors';
 
 const CAPSULE_MARGIN_RIGHT: number = 96; // 元服务胶囊占位宽度
 const INTERSTITIAL_SHOWN_KEY: string = 'interstitial_shown_in_session';
@@ -175,7 +176,7 @@ struct TopicDetailPage {
       Text('内容详情')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#222222')
+        .fontColor(Colors.BODY_TEXT)
         .textAlign(TextAlign.Center)
         .layoutWeight(1)
 
@@ -193,7 +194,7 @@ struct TopicDetailPage {
     Row() {
       Text(label)
         .fontSize(14)
-        .fontColor('#595959')
+        .fontColor(Colors.SECONDARY_TEXT)
       Text(value)
         .fontSize(14)
         .fontColor(valueColor)
@@ -216,16 +217,16 @@ struct TopicDetailPage {
             Row() {
               Text('需求职业：')
                 .fontSize(14)
-                .fontColor('#595959')
+                .fontColor(Colors.SECONDARY_TEXT)
               Flex({ wrap: FlexWrap.Wrap }) {
                 ForEach(this.tags, (tag: string) => {
                   Text(tag)
                     .fontSize(13)
-                    .fontColor('#A67C00')
+                    .fontColor(Colors.PRIMARY_TEXT)
                     .height(20)
                     .padding({ left: 12, right: 12 })
                     .borderRadius(13)
-                    .border({ width: 1, color: '#A67C00' })
+                    .border({ width: 1, color: Colors.PRIMARY_TEXT })
                     .margin({ right: 10, bottom: 10 })
                 })
               }
@@ -240,17 +241,17 @@ struct TopicDetailPage {
               Row() {
                 Text('要求：')
                   .fontSize(14)
-                  .fontColor('#595959')
+                  .fontColor(Colors.SECONDARY_TEXT)
                 Text(`发布时间：${this.info?.created_at ?? '暂无'}`)
                   .fontSize(12)
-                  .fontColor('#595959')
+                  .fontColor(Colors.SECONDARY_TEXT)
               }
               .width('100%')
               .justifyContent(FlexAlign.SpaceBetween)
 
               Text(this.info?.content ?? '')
                 .fontSize(14)
-                .fontColor('#222222')
+                .fontColor(Colors.BODY_TEXT)
                 .lineHeight(24)
                 .width('100%')
                 .margin({ top: 8, bottom: 10 })
@@ -262,7 +263,7 @@ struct TopicDetailPage {
                   .margin({ right: 4 })
                 Text(this.info?.address ?? '')
                   .fontSize(14)
-                  .fontColor('#595959')
+                  .fontColor(Colors.SECONDARY_TEXT)
               }
               .width('100%')
             }
@@ -271,9 +272,9 @@ struct TopicDetailPage {
 
             // party != 2（招工）才展示薪酬/企业/收费说明
             if ((this.info?.party ?? 1) !== 2) {
-              this.labelRow('薪酬范围：', this.info?.salary ?? '暂无', '#A67C00', true)
-              this.labelRow('企业单位：', this.info?.company_name ?? '暂无', '#222222', false)
-              this.labelRow('岗位收费要求：', '该岗位招聘不涉及收费', '#222222', false)
+              this.labelRow('薪酬范围：', this.info?.salary ?? '暂无', Colors.SALARY_TEXT, true)
+              this.labelRow('企业单位：', this.info?.company_name ?? '暂无', Colors.BODY_TEXT, false)
+              this.labelRow('岗位收费要求：', '该岗位招聘不涉及收费', Colors.BODY_TEXT, false)
             }
           }
           .width('100%')
@@ -291,13 +292,13 @@ struct TopicDetailPage {
               .height(24)
             Text('温馨提示')
               .fontSize(12)
-              .fontColor('#A67C00')
+              .fontColor(Colors.PRIMARY_TEXT)
           }
           .margin({ bottom: 3 })
 
           Text('联系之前请您注意辨别信息真伪，核实岗位实情及实际情况，谨防上当受骗。平台不参与招聘事宜，相关招聘及履约问题由招聘双方确认并担责。')
             .fontSize(10)
-            .fontColor('#666666')
+            .fontColor(Colors.CAPTION_TEXT)
             .width('100%')
             .margin({ bottom: 10 })
 
@@ -308,11 +309,11 @@ struct TopicDetailPage {
 
           Text(this.getContactButtonText())
             .fontSize(15)
-            .fontColor('#000000')
+            .fontColor(Colors.BODY_TEXT)
             .textAlign(TextAlign.Center)
             .width('100%')
             .height(44)
-            .backgroundColor('#FDD000')
+            .backgroundColor(Colors.PRIMARY_BUTTON_BG)
             .borderRadius(8)
             .onClick(() => this.onContactClick())
         }

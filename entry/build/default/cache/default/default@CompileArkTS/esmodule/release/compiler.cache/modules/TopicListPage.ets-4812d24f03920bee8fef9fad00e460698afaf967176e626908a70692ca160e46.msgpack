@@ -1,0 +1,731 @@
+Ôr@Ÿªassertions¤code´customTransformCache¬dependencies¢id¤meta±moduleSideEffects¬originalCode±originalSourcemap«resolvedIds®sourcemapChainµsyntheticNamedExportsµtransformDependencies®transformFiles¨cacheAstÔrAÚQ-if (!("finalizeConstruction" in ViewPU.prototype)) {
+    Reflect.set(ViewPU.prototype, "finalizeConstruction", () => { });
+}
+import router from "@ohos.router";
+import { TopicApi } from '../services/TopicApi';
+import { AdService } from '../services/AdService';
+import { AdIds } from '../constants/AdIds';
+import { Store } from '../utils/Store';
+import { Dialer } from '../utils/Dialer';
+import { ListRow, TopicDataSource } from '../utils/TopicDataSource';
+import { TopicCard } from '../components/TopicCard';
+import { NativeAdCard } from '../components/NativeAdCard';
+import { Colors } from '../constants/Colors';
+const PAGE_SIZE = 10;
+const AD_INSERT_POS = 8; // æ¯æ‰¹å¸–å­ç¬¬ 8 æ¡åæ’å…¥ 1 æ¡åŸç”Ÿå¹¿å‘Š
+const CAPSULE_MARGIN_RIGHT = 96; // å…ƒæœåŠ¡èƒ¶å›Šå ä½å®½åº¦ï¼ˆé¿å…å†…å®¹/æ ‡é¢˜ä¸èƒ¶å›Šé‡å ï¼‰
+class TopicListPage extends ViewPU {
+    constructor(parent, params, __localStorage, elmtId = -1, paramsLambda = undefined, extraInfo) {
+        super(parent, __localStorage, elmtId, extraInfo);
+        if (typeof paramsLambda === "function") {
+            this.paramsGenerator_ = paramsLambda;
+        }
+        this.__dataSource = new ObservedPropertyObjectPU(new TopicDataSource(), this, "dataSource");
+        this.__refreshing = new ObservedPropertySimplePU(false, this, "refreshing");
+        this.__address = new ObservedPropertySimplePU('å…¨å›½', this, "address");
+        this.__statusBarHeight = new ObservedPropertySimplePU(0, this, "statusBarHeight");
+        this.__navBarHeight = new ObservedPropertySimplePU(0, this, "navBarHeight");
+        this.page = 1;
+        this.pageTotal = -1;
+        this.loading = false;
+        this.setInitiallyProvidedValue(params);
+        this.finalizeConstruction();
+    }
+    setInitiallyProvidedValue(params) {
+        if (params.dataSource !== undefined) {
+            this.dataSource = params.dataSource;
+        }
+        if (params.refreshing !== undefined) {
+            this.refreshing = params.refreshing;
+        }
+        if (params.address !== undefined) {
+            this.address = params.address;
+        }
+        if (params.statusBarHeight !== undefined) {
+            this.statusBarHeight = params.statusBarHeight;
+        }
+        if (params.navBarHeight !== undefined) {
+            this.navBarHeight = params.navBarHeight;
+        }
+        if (params.page !== undefined) {
+            this.page = params.page;
+        }
+        if (params.pageTotal !== undefined) {
+            this.pageTotal = params.pageTotal;
+        }
+        if (params.loading !== undefined) {
+            this.loading = params.loading;
+        }
+    }
+    updateStateVars(params) {
+    }
+    purgeVariableDependenciesOnElmtId(rmElmtId) {
+        this.__dataSource.purgeDependencyOnElmtId(rmElmtId);
+        this.__refreshing.purgeDependencyOnElmtId(rmElmtId);
+        this.__address.purgeDependencyOnElmtId(rmElmtId);
+        this.__statusBarHeight.purgeDependencyOnElmtId(rmElmtId);
+        this.__navBarHeight.purgeDependencyOnElmtId(rmElmtId);
+    }
+    aboutToBeDeleted() {
+        this.__dataSource.aboutToBeDeleted();
+        this.__refreshing.aboutToBeDeleted();
+        this.__address.aboutToBeDeleted();
+        this.__statusBarHeight.aboutToBeDeleted();
+        this.__navBarHeight.aboutToBeDeleted();
+        SubscriberManager.Get().delete(this.id__());
+        this.aboutToBeDeletedInternal();
+    }
+    get dataSource() {
+        return this.__dataSource.get();
+    }
+    set dataSource(newValue) {
+        this.__dataSource.set(newValue);
+    }
+    get refreshing() {
+        return this.__refreshing.get();
+    }
+    set refreshing(newValue) {
+        this.__refreshing.set(newValue);
+    }
+    get address() {
+        return this.__address.get();
+    }
+    set address(newValue) {
+        this.__address.set(newValue);
+    }
+    get statusBarHeight() {
+        return this.__statusBarHeight.get();
+    }
+    set statusBarHeight(newValue) {
+        this.__statusBarHeight.set(newValue);
+    }
+    get navBarHeight() {
+        return this.__navBarHeight.get();
+    }
+    set navBarHeight(newValue) {
+        this.__navBarHeight.set(newValue);
+    }
+    aboutToAppear() {
+        this.statusBarHeight = (AppStorage.get('statusBarHeight') ?? 0);
+        this.navBarHeight = (AppStorage.get('navBarHeight') ?? 0);
+        // åˆè§„ï¼šé¦–æ¬¡å¯åŠ¨å¿…é¡»å…ˆè·å¾—éšç§åè®®åŒæ„ï¼ŒåŒæ„åæ‰è¯·æ±‚æ•°æ®ä¸å¹¿å‘Š
+        if (Store.getBool('privacy_agreed', false)) {
+            this.loadList(true, true);
+        }
+        else {
+            this.showPrivacyDialog();
+        }
+    }
+    /** é¦–å¯éšç§åè®®å¼¹çª—ï¼ˆå¹¿å‘Šåˆè§„ç¡¬æ€§è¦æ±‚ï¼šåŒæ„å‰ä¸å¾—è¯·æ±‚å¹¿å‘Šï¼‰ */
+    showPrivacyDialog() {
+        this.getUIContext().getPromptAction().showDialog({
+            title: 'ç”¨æˆ·åè®®ä¸éšç§æ”¿ç­–',
+            message: 'æ„Ÿè°¢æ‚¨ä½¿ç”¨å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°ã€‚æˆ‘ä»¬å°†ä¸¥æ ¼éµå®ˆæ³•å¾‹æ³•è§„ï¼Œä¿æŠ¤æ‚¨çš„ä¸ªäººä¿¡æ¯å®‰å…¨ã€‚' +
+                'æˆ‘ä»¬ä¼šåŸºäºç½‘ç»œçŠ¶æ€åŠ è½½æ‹›è˜ä¿¡æ¯ï¼Œå¹¶åœ¨æ‚¨åŒæ„åå±•ç¤ºå¹¿å‘Šå†…å®¹ã€‚è¯·æ‚¨ä»”ç»†é˜…è¯»å¹¶åŒæ„ã€Šç”¨æˆ·åè®®ã€‹å’Œã€Šéšç§æ”¿ç­–ã€‹åç»§ç»­ä½¿ç”¨ã€‚',
+            buttons: [
+                { text: 'åŒæ„', color: Colors.PRIMARY_TEXT },
+                { text: 'ä¸åŒæ„', color: Colors.SECONDARY_TEXT }
+            ]
+        }).then((result) => {
+            if (result.index === 0) {
+                Store.putBool('privacy_agreed', true);
+                this.initAfterConsent();
+            }
+            else {
+                // ä¸åŒæ„åˆ™é€€å‡ºï¼ˆè¡Œä¸šé€šè¡Œåˆè§„åšæ³•ï¼‰
+                getContext(this).terminateSelf();
+            }
+        });
+    }
+    async initAfterConsent() {
+        // æ³¨ï¼šå…ƒæœåŠ¡ä¸æ”¯æŒ OAIDï¼ˆidentifier è¢«ç¦ç”¨ï¼‰ï¼Œæ— éœ€å¹¿å‘Šæƒé™åˆå§‹åŒ–ï¼Œä»…éä¸ªæ€§åŒ–å¹¿å‘Š
+        this.loadList(true, true);
+    }
+    async loadList(refresh, replace) {
+        if (this.loading) {
+            return;
+        }
+        this.loading = true;
+        try {
+            const res = await TopicApi.list(this.page, 1, 0);
+            if (res.code === 200 && res.data) {
+                const topics = res.data.data ?? [];
+                this.pageTotal = res.data.last_page ?? -1;
+                const rows = topics.map((t) => {
+                    const r = new ListRow();
+                    r.kind = 0;
+                    r.topic = t;
+                    return r;
+                });
+                // ä¿¡æ¯æµå¹¿å‘Šï¼šæ¯æ‰¹è¯·æ±‚ 1 æ¡æ–°å¹¿å‘Šæ’å…¥ï¼ˆåˆè§„ï¼šä¸é‡å¤å±•ç¤ºåŒä¸€å¹¿å‘Šï¼‰
+                if (AdIds.AD_ENABLED && rows.length > 0) {
+                    const ads = await AdService.loadNativeAds(getContext(this), AdIds.nativeAdId(), 1);
+                    if (ads.length > 0) {
+                        const adRow = new ListRow();
+                        adRow.kind = 1;
+                        adRow.ad = ads[0];
+                        rows.splice(Math.min(AD_INSERT_POS, rows.length), 0, adRow);
+                    }
+                }
+                if (replace) {
+                    this.dataSource.replaceAll(rows);
+                }
+                else {
+                    this.dataSource.append(rows);
+                }
+            }
+            else {
+                this.getUIContext().getPromptAction().showToast({ message: res.msg ?? 'åŠ è½½å¤±è´¥' });
+            }
+        }
+        finally {
+            this.loading = false;
+            if (refresh) {
+                this.refreshing = false;
+            }
+        }
+    }
+    onRefresh() {
+        this.page = 1;
+        this.loadList(true, true);
+    }
+    onReachEnd() {
+        if (!this.loading && this.pageTotal > 0 && this.page < this.pageTotal) {
+            this.page += 1;
+            this.loadList(false, false);
+        }
+    }
+    /** ä¸€çº§æ ‡é¢˜æ ï¼šä»… 1 ä¸ªæ–‡å­—å…ƒç´ ï¼Œé«˜åº¦ â‰¥44vpï¼Œå­—å· â‰¥20fp åŠ ç²—ï¼Œå³ä¾§ç•™å‡ºèƒ¶å›Šå ä½ */
+    titleBar(parent = null) {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width('100%');
+            Row.height(this.statusBarHeight + 44);
+            Row.padding({ top: this.statusBarHeight });
+            Row.backgroundColor(Colors.TITLE_BAR_BG);
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // å·¦ä¾§ä¸å³ä¾§å ä½ç­‰å®½ï¼Œä½¿æ ‡é¢˜åœ¨è§†è§‰ä¸­å¿ƒä¸èƒ¶å›Šæ°´å¹³ä¸­å¿ƒå¯¹é½
+            Blank.create();
+            // å·¦ä¾§ä¸å³ä¾§å ä½ç­‰å®½ï¼Œä½¿æ ‡é¢˜åœ¨è§†è§‰ä¸­å¿ƒä¸èƒ¶å›Šæ°´å¹³ä¸­å¿ƒå¯¹é½
+            Blank.width(CAPSULE_MARGIN_RIGHT);
+        }, Blank);
+        // å·¦ä¾§ä¸å³ä¾§å ä½ç­‰å®½ï¼Œä½¿æ ‡é¢˜åœ¨è§†è§‰ä¸­å¿ƒä¸èƒ¶å›Šæ°´å¹³ä¸­å¿ƒå¯¹é½
+        Blank.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°');
+            Text.fontSize(20);
+            Text.fontWeight(FontWeight.Bold);
+            Text.fontColor(Colors.BODY_TEXT);
+            Text.textAlign(TextAlign.Center);
+            Text.layoutWeight(1);
+        }, Text);
+        Text.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Blank.create();
+            Blank.width(CAPSULE_MARGIN_RIGHT);
+        }, Blank);
+        Blank.pop();
+        Row.pop();
+    }
+    filterBar(parent = null) {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+            Stack.create();
+            // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+            Stack.alignContent(Alignment.Center);
+            // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+            Stack.width('100%');
+            // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+            Stack.height(36);
+            // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+            Stack.padding({ left: 20, right: 20 });
+            // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+            Stack.backgroundColor(Colors.TITLE_BAR_BG);
+        }, Stack);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width('100%');
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create(this.address);
+            Text.fontSize(12);
+            Text.fontColor(Colors.BODY_TEXT);
+            Text.margin({ left: 10 });
+        }, Text);
+        Text.pop();
+        Row.pop();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Row.create();
+            Row.width(177);
+            Row.height(24);
+            Row.backgroundColor(Color.White);
+            Row.borderRadius(12);
+        }, Row);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777231, "type": 20000, params: [], "bundleName": "com.atomicservice.6917614059205018261", "moduleName": "entry" });
+            Image.width('100%');
+            Image.height('100%');
+        }, Image);
+        Row.pop();
+        // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+        Stack.pop();
+    }
+    emptyView(parent = null) {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.width('100%');
+            Column.height(400);
+            Column.justifyContent(FlexAlign.Center);
+        }, Column);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Image.create({ "id": 16777227, "type": 20000, params: [], "bundleName": "com.atomicservice.6917614059205018261", "moduleName": "entry" });
+            Image.width(130);
+            Image.height(130);
+            Image.margin({ bottom: 10 });
+        }, Image);
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Text.create('æš‚æ— æ•°æ®');
+            Text.fontSize(14);
+            Text.fontColor(Colors.BODY_TEXT);
+        }, Text);
+        Text.pop();
+        Column.pop();
+    }
+    initialRender() {
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            Column.create();
+            Column.width('100%');
+            Column.height('100%');
+            Column.backgroundColor(Colors.PAGE_BG);
+        }, Column);
+        this.titleBar.bind(this)();
+        this.filterBar.bind(this)();
+        this.observeComponentCreation2((elmtId, isInitialRender) => {
+            If.create();
+            if (this.dataSource.isEmpty() && !this.loading) {
+                this.ifElseBranchUpdateFunction(0, () => {
+                    this.emptyView.bind(this)();
+                });
+            }
+            else {
+                this.ifElseBranchUpdateFunction(1, () => {
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        Refresh.create({ refreshing: { value: this.refreshing, changeEvent: newValue => { this.refreshing = newValue; } } });
+                        Refresh.onRefreshing(() => this.onRefresh());
+                        Refresh.layoutWeight(1);
+                    }, Refresh);
+                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                        List.create();
+                        List.width('100%');
+                        List.padding({ left: 20, right: 20, bottom: this.navBarHeight });
+                        List.onReachEnd(() => this.onReachEnd());
+                    }, List);
+                    {
+                        const __lazyForEachItemGenFunction = (_item, index) => {
+                            const item = _item;
+                            {
+                                const itemCreation2 = (elmtId, isInitialRender) => {
+                                    ListItem.create(() => { }, false);
+                                };
+                                const observedDeepRender = () => {
+                                    this.observeComponentCreation2(itemCreation2, ListItem);
+                                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                        If.create();
+                                        if (item.kind === 0) {
+                                            this.ifElseBranchUpdateFunction(0, () => {
+                                                this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                                    __Common__.create();
+                                                    __Common__.onClick(() => {
+                                                        const id = item.topic?.id;
+                                                        if (id) {
+                                                            router.pushUrl({ url: 'pages/TopicDetailPage', params: { id: id } });
+                                                        }
+                                                    });
+                                                }, __Common__);
+                                                {
+                                                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                                        if (isInitialRender) {
+                                                            let componentCall = new TopicCard(this, {
+                                                                topic: item.topic,
+                                                                onContact: (mobile) => {
+                                                                    Dialer.dial(this.getUIContext(), mobile);
+                                                                }
+                                                            }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 205, col: 19 });
+                                                            ViewPU.create(componentCall);
+                                                            let paramsLambda = () => {
+                                                                return {
+                                                                    topic: item.topic,
+                                                                    onContact: (mobile) => {
+                                                                        Dialer.dial(this.getUIContext(), mobile);
+                                                                    }
+                                                                };
+                                                            };
+                                                            componentCall.paramsGenerator_ = paramsLambda;
+                                                        }
+                                                        else {
+                                                            this.updateStateVarsOfChildByElmtId(elmtId, {});
+                                                        }
+                                                    }, { name: "TopicCard" });
+                                                }
+                                                __Common__.pop();
+                                            });
+                                        }
+                                        else {
+                                            this.ifElseBranchUpdateFunction(1, () => {
+                                                {
+                                                    this.observeComponentCreation2((elmtId, isInitialRender) => {
+                                                        if (isInitialRender) {
+                                                            let componentCall = new NativeAdCard(this, { ad: item.ad }, undefined, elmtId, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 218, col: 19 });
+                                                            ViewPU.create(componentCall);
+                                                            let paramsLambda = () => {
+                                                                return {
+                                                                    ad: item.ad
+                                                                };
+                                                            };
+                                                            componentCall.paramsGenerator_ = paramsLambda;
+                                                        }
+                                                        else {
+                                                            this.updateStateVarsOfChildByElmtId(elmtId, {});
+                                                        }
+                                                    }, { name: "NativeAdCard" });
+                                                }
+                                            });
+                                        }
+                                    }, If);
+                                    If.pop();
+                                    ListItem.pop();
+                                };
+                                observedDeepRender();
+                            }
+                        };
+                        const __lazyForEachItemIdFunc = (item, index) => `${item.kind}_${index}_${item.topic?.id ?? 'ad'}`;
+                        LazyForEach.create("1", this, this.dataSource, __lazyForEachItemGenFunction, __lazyForEachItemIdFunc);
+                        LazyForEach.pop();
+                    }
+                    List.pop();
+                    Refresh.pop();
+                });
+            }
+        }, If);
+        If.pop();
+        Column.pop();
+    }
+    rerender() {
+        this.updateDirtyElements();
+    }
+    static getEntryName() {
+        return "TopicListPage";
+    }
+}
+registerNamedRoute(() => new TopicListPage(undefined, {}), "", { bundleName: "com.atomicservice.6917614059205018261", moduleName: "entry", pagePath: "pages/TopicListPage", pageFullPath: "entry/src/main/ets/pages/TopicListPage", integratedHsp: "false", moduleType: "followWithHap" });
+//# sourceMappingURL=TopicListPage.js.mapÂšÙi hvigor_ignore__Applications_DevEco-Studio.app_Contents_sdk_default_openharmony_ets_api_@ohos.router.d.tsÙ\/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/TopicApi.etsÙ]/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.etsÙZ/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/AdIds.etsÙV/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Store.etsÙW/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Dialer.etsÙ`/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/TopicDataSource.etsÙ_/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/TopicCard.etsÙb/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.etsÙ[/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/Colors.etsÙ^/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicListPage.etsÔrBšªmoduleName±isLocalDependency¯isNodeEntryFile§pkgPath±belongProjectPath§pkgNameªpkgVersion±dependencyPkgInfo°belongModulePath¬shouldEmitJs¥entryÃÂÙ9/Users/pange/Codes/genfee/worker-bee-atomic-service/entryÙ3/Users/pange/Codes/genfee/worker-bee-atomic-service¥entry¥1.0.0Ô  Ù9/Users/pange/Codes/genfee/worker-bee-atomic-service/entryÃÃÚSimport { common } from '@kit.AbilityKit';
+import { router } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { Topic, TopicApi } from '../services/TopicApi';
+import { AdService } from '../services/AdService';
+import { AdIds } from '../constants/AdIds';
+import { Store } from '../utils/Store';
+import { Dialer } from '../utils/Dialer';
+import { ListRow, TopicDataSource } from '../utils/TopicDataSource';
+import { TopicCard } from '../components/TopicCard';
+import { NativeAdCard } from '../components/NativeAdCard';
+import { Colors } from '../constants/Colors';
+
+const PAGE_SIZE: number = 10;
+const AD_INSERT_POS: number = 8; // æ¯æ‰¹å¸–å­ç¬¬ 8 æ¡åæ’å…¥ 1 æ¡åŸç”Ÿå¹¿å‘Š
+const CAPSULE_MARGIN_RIGHT: number = 96; // å…ƒæœåŠ¡èƒ¶å›Šå ä½å®½åº¦ï¼ˆé¿å…å†…å®¹/æ ‡é¢˜ä¸èƒ¶å›Šé‡å ï¼‰
+
+@Entry
+@Component
+struct TopicListPage {
+  @State private dataSource: TopicDataSource = new TopicDataSource();
+  @State private refreshing: boolean = false;
+  @State private address: string = 'å…¨å›½'; // ç®€åŒ–ç‰ˆå›ºå®šå…¨å›½ï¼ˆæ— åœ°åŒºé€‰æ‹©é¡µï¼‰
+  @State private statusBarHeight: number = 0;
+  @State private navBarHeight: number = 0; // åº•éƒ¨å¯¼èˆªæ¡é¿è®©é«˜åº¦ï¼ˆå®¡æ ¸æ•´æ”¹ï¼‰
+
+  private page: number = 1;
+  private pageTotal: number = -1;
+  private loading: boolean = false;
+
+  aboutToAppear(): void {
+    this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
+    this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
+    // åˆè§„ï¼šé¦–æ¬¡å¯åŠ¨å¿…é¡»å…ˆè·å¾—éšç§åè®®åŒæ„ï¼ŒåŒæ„åæ‰è¯·æ±‚æ•°æ®ä¸å¹¿å‘Š
+    if (Store.getBool('privacy_agreed', false)) {
+      this.loadList(true, true);
+    } else {
+      this.showPrivacyDialog();
+    }
+  }
+
+  /** é¦–å¯éšç§åè®®å¼¹çª—ï¼ˆå¹¿å‘Šåˆè§„ç¡¬æ€§è¦æ±‚ï¼šåŒæ„å‰ä¸å¾—è¯·æ±‚å¹¿å‘Šï¼‰ */
+  private showPrivacyDialog(): void {
+    this.getUIContext().getPromptAction().showDialog({
+      title: 'ç”¨æˆ·åè®®ä¸éšç§æ”¿ç­–',
+      message: 'æ„Ÿè°¢æ‚¨ä½¿ç”¨å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°ã€‚æˆ‘ä»¬å°†ä¸¥æ ¼éµå®ˆæ³•å¾‹æ³•è§„ï¼Œä¿æŠ¤æ‚¨çš„ä¸ªäººä¿¡æ¯å®‰å…¨ã€‚' +
+        'æˆ‘ä»¬ä¼šåŸºäºç½‘ç»œçŠ¶æ€åŠ è½½æ‹›è˜ä¿¡æ¯ï¼Œå¹¶åœ¨æ‚¨åŒæ„åå±•ç¤ºå¹¿å‘Šå†…å®¹ã€‚è¯·æ‚¨ä»”ç»†é˜…è¯»å¹¶åŒæ„ã€Šç”¨æˆ·åè®®ã€‹å’Œã€Šéšç§æ”¿ç­–ã€‹åç»§ç»­ä½¿ç”¨ã€‚',
+      buttons: [
+        { text: 'åŒæ„', color: Colors.PRIMARY_TEXT },
+        { text: 'ä¸åŒæ„', color: Colors.SECONDARY_TEXT }
+      ]
+    }).then((result) => {
+      if (result.index === 0) {
+        Store.putBool('privacy_agreed', true);
+        this.initAfterConsent();
+      } else {
+        // ä¸åŒæ„åˆ™é€€å‡ºï¼ˆè¡Œä¸šé€šè¡Œåˆè§„åšæ³•ï¼‰
+        (getContext(this) as common.UIAbilityContext).terminateSelf();
+      }
+    });
+  }
+
+  private async initAfterConsent(): Promise<void> {
+    // æ³¨ï¼šå…ƒæœåŠ¡ä¸æ”¯æŒ OAIDï¼ˆidentifier è¢«ç¦ç”¨ï¼‰ï¼Œæ— éœ€å¹¿å‘Šæƒé™åˆå§‹åŒ–ï¼Œä»…éä¸ªæ€§åŒ–å¹¿å‘Š
+    this.loadList(true, true);
+  }
+
+  private async loadList(refresh: boolean, replace: boolean): Promise<void> {
+    if (this.loading) {
+      return;
+    }
+    this.loading = true;
+    try {
+      const res = await TopicApi.list(this.page, 1, 0);
+      if (res.code === 200 && res.data) {
+        const topics: Topic[] = res.data.data ?? [];
+        this.pageTotal = res.data.last_page ?? -1;
+
+        const rows: ListRow[] = topics.map((t: Topic) => {
+          const r = new ListRow();
+          r.kind = 0;
+          r.topic = t;
+          return r;
+        });
+
+        // ä¿¡æ¯æµå¹¿å‘Šï¼šæ¯æ‰¹è¯·æ±‚ 1 æ¡æ–°å¹¿å‘Šæ’å…¥ï¼ˆåˆè§„ï¼šä¸é‡å¤å±•ç¤ºåŒä¸€å¹¿å‘Šï¼‰
+        if (AdIds.AD_ENABLED && rows.length > 0) {
+          const ads = await AdService.loadNativeAds(getContext(this), AdIds.nativeAdId(), 1);
+          if (ads.length > 0) {
+            const adRow = new ListRow();
+            adRow.kind = 1;
+            adRow.ad = ads[0];
+            rows.splice(Math.min(AD_INSERT_POS, rows.length), 0, adRow);
+          }
+        }
+
+        if (replace) {
+          this.dataSource.replaceAll(rows);
+        } else {
+          this.dataSource.append(rows);
+        }
+      } else {
+        this.getUIContext().getPromptAction().showToast({ message: res.msg ?? 'åŠ è½½å¤±è´¥' });
+      }
+    } finally {
+      this.loading = false;
+      if (refresh) {
+        this.refreshing = false;
+      }
+    }
+  }
+
+  private onRefresh(): void {
+    this.page = 1;
+    this.loadList(true, true);
+  }
+
+  private onReachEnd(): void {
+    if (!this.loading && this.pageTotal > 0 && this.page < this.pageTotal) {
+      this.page += 1;
+      this.loadList(false, false);
+    }
+  }
+
+  /** ä¸€çº§æ ‡é¢˜æ ï¼šä»… 1 ä¸ªæ–‡å­—å…ƒç´ ï¼Œé«˜åº¦ â‰¥44vpï¼Œå­—å· â‰¥20fp åŠ ç²—ï¼Œå³ä¾§ç•™å‡ºèƒ¶å›Šå ä½ */
+  @Builder
+  titleBar() {
+    Row() {
+      // å·¦ä¾§ä¸å³ä¾§å ä½ç­‰å®½ï¼Œä½¿æ ‡é¢˜åœ¨è§†è§‰ä¸­å¿ƒä¸èƒ¶å›Šæ°´å¹³ä¸­å¿ƒå¯¹é½
+      Blank()
+        .width(CAPSULE_MARGIN_RIGHT)
+      Text('å·¥èœ‚æ‹›å·¥æ‰¾æ´»å¹³å°')
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(Colors.BODY_TEXT)
+        .textAlign(TextAlign.Center)
+        .layoutWeight(1)
+      Blank()
+        .width(CAPSULE_MARGIN_RIGHT)
+    }
+    .width('100%')
+    .height(this.statusBarHeight + 44)
+    .padding({ top: this.statusBarHeight })
+    .backgroundColor(Colors.TITLE_BAR_BG)
+  }
+
+  @Builder
+  filterBar() {
+    // åŸæ ‡é¢˜æ ä¸­çš„"å…¨å›½"+tabs å›¾ä¸‹ç§»åˆ°å†…å®¹åŒºï¼Œé¿å…å ç”¨èƒ¶å›ŠåŒºåŸŸ
+    Stack() {
+      Row() {
+        Text(this.address)
+          .fontSize(12)
+          .fontColor(Colors.BODY_TEXT)
+          .margin({ left: 10 })
+      }
+      .width('100%')
+
+      Row() {
+        Image($r('app.media.zzrz'))
+          .width('100%')
+          .height('100%')
+      }
+      .width(177)
+      .height(24)
+      .backgroundColor(Color.White)
+      .borderRadius(12)
+    }
+    .alignContent(Alignment.Center)
+    .width('100%')
+    .height(36)
+    .padding({ left: 20, right: 20 })
+    .backgroundColor(Colors.TITLE_BAR_BG)
+  }
+
+  @Builder
+  emptyView() {
+    Column() {
+      Image($r('app.media.empty'))
+        .width(130)
+        .height(130)
+        .margin({ bottom: 10 })
+      Text('æš‚æ— æ•°æ®')
+        .fontSize(14)
+        .fontColor(Colors.BODY_TEXT)
+    }
+    .width('100%')
+    .height(400)
+    .justifyContent(FlexAlign.Center)
+  }
+
+  build() {
+    Column() {
+      this.titleBar()
+      this.filterBar()
+
+      if (this.dataSource.isEmpty() && !this.loading) {
+        this.emptyView()
+      } else {
+        Refresh({ refreshing: $$this.refreshing }) {
+          List() {
+            LazyForEach(this.dataSource, (item: ListRow, index: number) => {
+              ListItem() {
+                if (item.kind === 0) {
+                  TopicCard({
+                    topic: item.topic,
+                    onContact: (mobile: string) => {
+                      Dialer.dial(this.getUIContext(), mobile);
+                    }
+                  })
+                    .onClick(() => {
+                      const id = item.topic?.id;
+                      if (id) {
+                        router.pushUrl({ url: 'pages/TopicDetailPage', params: { id: id } });
+                      }
+                    })
+                } else {
+                  NativeAdCard({ ad: item.ad })
+                }
+              }
+            }, (item: ListRow, index: number) => `${item.kind}_${index}_${item.topic?.id ?? 'ad'}`)
+          }
+          .width('100%')
+          // å®¡æ ¸æ•´æ”¹ï¼šåº•éƒ¨ padding é¿è®©å¯¼èˆªæ¡ï¼Œæ»šåŠ¨åˆ°åº•éƒ¨æ—¶æœ€åä¸€æ¡å¡ç‰‡ä¸è¢«é®æŒ¡
+          .padding({ left: 20, right: 20, bottom: this.navBarHeight })
+          .onReachEnd(() => this.onReachEnd())
+        }
+        .onRefreshing(() => this.onRefresh())
+        .layoutWeight(1)
+      }
+    }
+    .width('100%')
+    .height('100%')
+    .backgroundColor(Colors.PAGE_BG)
+  }
+}
+ÀÔrCš¬@ohos.router´../services/TopicApiµ../services/AdService²../constants/AdIds¯../utils/Dialer·../components/TopicCardº../components/NativeAdCard¸../utils/TopicDataSource®../utils/Store³../constants/ColorsÔrD—ªassertions¨external¢id¤meta±moduleSideEffectsªresolvedByµsyntheticNamedExportsAÃÙi hvigor_ignore__Applications_DevEco-Studio.app_Contents_sdk_default_openharmony_ets_api_@ohos.router.d.tsÔrE‘¯hostModulesInfo‘ÔrF’²hostDependencyName®hostModuleName¬@ohos.router¥entryÃªoh-resolveÂDAÂÙ\/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/TopicApi.etsAÃªoh-resolveÂDAÂÙ]/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.etsAÃªoh-resolveÂDAÂÙZ/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/AdIds.etsAÃªoh-resolveÂDAÂÙW/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Dialer.etsAÃªoh-resolveÂDAÂÙ_/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/TopicCard.etsAÃªoh-resolveÂDAÂÙb/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/NativeAdCard.etsAÃªoh-resolveÂDAÂÙ`/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/TopicDataSource.etsAÃªoh-resolveÂDAÂÙV/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Store.etsAÃªoh-resolveÂDAÂÙ[/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/Colors.etsAÃªoh-resolveÂ“ÔrG–§version¤fileªsourceRoot§sources¥names¨mappings°TopicListPage.js ‘±TopicListPage.etsÜ–”   ” 	” ” ”! #”" $˜”   ” ”	 ” ” ”  ”/ 6”0 7˜”   ” ”	 	” ” ” ”1 1”2 2˜”   ” ”	 	” ” ” ”* *”+ +˜”   ” ”	 	” ” ” ”& &”' '˜”   ” ”	 	” ” ” ”( (”) )š”   ” ”	 	” ” ”! !”# #”) )”ÌC ÌC”ÌD ÌD˜”  	 ” 	”	 		” 	” 	” 	”3 	3”4 	4˜”  
+ ” 
+”	 
+	” 
+” 
+” 
+”9 
+9”: 
+:˜”   ” ”	 	” ” ” ”, ,”- -–”   ” ” ” ” ” ˜”   ” ” ” ” ”  ” !”0 8˜”   ” ” ” %” '”  (”! )”; ÌC’” ” ‘”  ””9 /”= 3”ÌL ÌB”ÌN ÌD’”9 '”> ,’”6 #”: '’”> +”? ,’”; (”< )’” ” “” ” ”  ’” ” "‘” (’” ” ’” ” ’” ” ’” ” ’” ” ’” ” ’” ”  ’” ”  ’” ” ’” ” ’” ” Ü ” ” ” 	” ” ”  ”* &”+ '”. *”/ 3”Ì@ ÌD”ÌA ÌE”ÌE ÌI”ÌF ÌJ”ÌG ÌK”ÌH ÌLÜ ”  ”  ”  	”  ”  ”  ”'  #”(  $”+  '”,  0”:  >”;  ?”?  ÌC”Ì@  ÌD”ÌA  ÌE”ÌB  ÌF’” !”) !%›” "” "” "” "” "” "”* "&”, "(”1 "-”2 ".”4 "0š” #” #
+” #” #” #” #”  #”$ #”% #”& # ‘”	 $‘” $–” %” %
+” %”" %”$ %”% %‘”	 &’” '” '’” )”' )%’” *
+” *›” +” +” +	” +” +” +”+ +'”- +)”. +*”8 +4”9 +5”” ,” ,” ,” ,”” -” -” -”< -6’” .”ÌK .ÌC“” /” /” /œ” 0” 0
+” 0” 0” 0” 0”# 0”% 0”+ 0#”, 0$”8 00”: 02œ” 1” 1
+” 1” 1” 1” 1”$ 1”& 1”, 1$”- 1%”; 13”= 15‘” 2™”	 3”
+ 3” 3” 3” 3” 3” 3” 3” 3˜” 4” 4
+” 4” 4” 4”! 4”" 4”$ 4š” 5” 5” 5” 5” 5”. 5&”0 5(”4 5,”5 5-”6 5.–” 6” 6” 6”% 6”' 6”( 6 ‘” 7‘” 7’” 8”# 8™” 9	” 9” 9” 9”  95”! 96”. 9ÌC”0 9ÌE”1 9ÌF‘” :”” ;”	 ;”
+ ;” ;’” <” <”” >
+”	 >”
+ >” > ’” ?”: ?6š” Ì@” Ì@” Ì@	” Ì@” Ì@” Ì@” Ì@”  Ì@”! Ì@”" Ì@’” ÌA” ÌA˜” ÌC
+”	 ÌC”
+ ÌC” ÌC” ÌC” ÌC)” ÌC+”# ÌC;–” ÌD” ÌD” ÌD” ÌD” ÌD” ÌD’” ÌE” ÌE‘”	 ÌF—” ÌG” ÌG” ÌG	” ÌG” ÌG” ÌG” ÌG’” ÌH” ÌHÜ ” ÌI” ÌI” ÌI” ÌI” ÌI”& ÌI ”' ÌI!”+ ÌI%”, ÌI&”0 ÌI*”1 ÌI+”5 ÌI/”7 ÌI1”8 ÌI2”: ÌI4”; ÌI5”< ÌI6”= ÌI7œ” ÌJ” ÌJ
+” ÌJ” ÌJ” ÌJ” ÌJ”  ÌJ”$ ÌJ”' ÌJ!”( ÌJ"”, ÌJ&”. ÌJ(œ” ÌK” ÌK” ÌK” ÌK ”" ÌK#”# ÌK$”' ÌK(”( ÌK)”, ÌK-”0 ÌK1”2 ÌK3”3 ÌK4” ÌL” ÌL” ÌL” ÌL”! ÌL”$ ÌL”% ÌL”) ÌL!”* ÌL"”3 ÌL+”7 ÌL/”8 ÌL0”9 ÌL1”: ÌL2œ” ÌN” ÌN” ÌN” ÌN ”# ÌN&”$ ÌN'”' ÌN*”( ÌN+”) ÌN,”* ÌN4”, ÌN6”. ÌN8˜” ÌO
+” ÌO” ÌO” ÌO”" ÌO”) ÌO”+ ÌO!”, ÌO"—” ÌP
+” ÌP” ÌP” ÌP” ÌP” ÌP” ÌP—” ÌQ
+” ÌQ” ÌQ” ÌQ” ÌQ” ÌQ”  ÌQ”” ÌR
+” ÌR” ÌR” ÌR”” ÌS” ÌS	” ÌS
+” ÌS’” ÌU”4 ÌU,œ” ÌV” ÌV” ÌV” ÌV”$ ÌV”( ÌV ”, ÌV$”- ÌV%”3 ÌV+”6 ÌV.”7 ÌV/”9 ÌV1Ü ” ÌW
+” ÌW” ÌW”  ÌW”& ÌW”/ ÌW%”0 ÌW&”= ÌW3”> ÌW4”ÌH ÌW>”ÌI ÌW?”ÌM ÌWÌC”ÌN ÌWÌD”ÌP ÌWÌF”ÌU ÌWÌK”ÌV ÌWÌL”Ì` ÌWÌV”Ìb ÌWÌX”Ìd ÌWÌZ”Ìe ÌWÌ[”Ìf ÌWÌ\”Ìg ÌWÌ]˜” ÌX
+” ÌX” ÌX” ÌX”" ÌX”% ÌX”& ÌX”( ÌX˜” ÌY” ÌY”# ÌY”& ÌY”* ÌY”1 ÌY%”3 ÌY'”4 ÌY(—” ÌZ” ÌZ” ÌZ”" ÌZ”% ÌZ”& ÌZ”' ÌZš” Ì[” Ì[” Ì[”  Ì[”# Ì[”& Ì[”' Ì[”( Ì[”) Ì[”* Ì[Ü ” Ì\” Ì\” Ì\”# Ì\”$ Ì\”( Ì\”) Ì\”, Ì\ ”- Ì\!”: Ì\.”< Ì\0”Ì@ Ì\4”ÌA Ì\5”ÌG Ì\;”ÌH Ì\<”ÌJ Ì\>”ÌK Ì\?”ÌM Ì\ÌA”ÌR Ì\ÌF”ÌS Ì\ÌG”ÌT Ì\ÌH‘” Ì]‘” Ì^	”” Ì`” Ì`” Ì`” Ì`š” Ìa
+” Ìa” Ìa”# Ìa”$ Ìa”. Ìa$”/ Ìa%”3 Ìa)”4 Ìa*”5 Ìa+‘” Ìb	‘” Ìbš” Ìc
+” Ìc” Ìc”# Ìc”$ Ìc”* Ìc ”+ Ìc!”/ Ìc%”0 Ìc&”1 Ìc'‘” Ìd	‘” Ìe‘” ÌeÜ ” Ìf” Ìf” Ìf”! Ìf”# Ìf”$ Ìf”3 Ìf+”5 Ìf-”6 Ìf.”? Ìf7”Ì@ Ìf8”ÌB Ìf:”ÌI ÌfÌA”ÌK ÌfÌC”ÌN ÌfÌF”ÌO ÌfÌG”ÌR ÌfÌJ”ÌV ÌfÌN”Ì\ ÌfÌT”Ì^ ÌfÌV”Ì_ ÌfÌW”Ì` ÌfÌX‘” Ìg‘”	 Ìh‘” Ìh—” Ìi” Ìi
+” Ìi” Ìi” Ìi”  Ìi”! Ìi”” Ìj” Ìj
+” Ìj” Ìj—” Ìk” Ìk” Ìk” Ìk”" Ìk”' Ìk”( Ìk ‘” Ìl‘”	 Ìm’” Ìn” Ìn’” Ìp
+” Ìp—” Ìq” Ìq” Ìq	” Ìq” Ìq” Ìq” Ìqš” Ìr” Ìr” Ìr	” Ìr” Ìr” Ìr” Ìr”  Ìr”! Ìr”" Ìr’” Ìs” Ìs’” Ìu
+” ÌuÜ ” Ìv” Ìv” Ìv	” Ìv” Ìv” Ìv” Ìv”! Ìv”" Ìv”+ Ìv'”. Ìv*”/ Ìv+”3 Ìv/”7 Ìv3”8 Ìv4”< Ìv8”? Ìv;”ÌC Ìv?”ÌD ÌvÌ@”ÌM ÌvÌI”ÌO ÌvÌK—” Ìw” Ìw
+” Ìw” Ìw” Ìw” Ìw” Ìwš” Ìx” Ìx
+” Ìx” Ìx” Ìx” Ìx”! Ìx”& Ìx ”' Ìx!”( Ìx"‘”	 Ìy’” Ìz” Ìz’” Ì|”8 Ì|6’” Ì~” Ì~
+’” Ì” Ì–” Ì” Ì” ÌŒ” ÌŒ
+” ÌŒ” ÌŒš” Ì” Ì” Ì” Ì” Ì” Ì” Ì”+ Ì ”. Ì#”0 Ì%œ” Ì” Ì” Ì” Ì” Ì” Ì” Ì” Ì”# Ì”$ Ì”3 Ì(”5 Ì*˜” Ì” Ì” Ì” Ì”  Ì”& Ì”' Ì”3 Ì(’” Ì€”* Ì€$’” Ì” Ì’” Ì€”* Ì€$–” Ì” Ì” Ì‚	” Ì‚” Ì‚”, Ì‚#’” Ì€”& Ì€$’” Ì” Ì”” Ìƒ” Ìƒ
+” Ìƒ”" Ìƒ–” Ìƒ” Ìƒ
+” Ì„	” Ì„” Ì„” Ì„˜” Ìƒ” Ìƒ
+” Ì…	” Ì…” Ì…”& Ì…”' Ì…”+ Ì…#˜” Ìƒ” Ìƒ
+” Ì†	” Ì†” Ì†”! Ì†”" Ì†”+ Ì†#˜” Ìƒ” Ìƒ
+” Ì‡	” Ì‡” Ì‡”$ Ì‡”% Ì‡”+ Ì‡#–” Ìƒ” Ìƒ
+” Ìˆ	” Ìˆ” Ìˆ” Ìˆ’” Ìƒ” Ìƒ
+’” Ì‰” Ì‰–” Ì‰” Ì‰” ÌŠ	” ÌŠ” ÌŠ”, ÌŠ#’” Ì‰” Ì‰’” Ì” Ì‘” Ì’” Ì“” Ì“’” Ì””/ Ì”'’” Ì•” Ì•	’” Ì””/ Ì”'˜” Ì•” Ì•	” Ì¨” Ì¨” Ì¨”( Ì¨”) Ì¨”/ Ì¨"’” Ì””/ Ì”'–” Ì•” Ì•	” Ì©” Ì©
+” Ì©” Ì©’” Ì””/ Ì”'–” Ì•” Ì•	” Ìª” Ìª” Ìª” Ìª’” Ì””/ Ì”'” Ì•” Ì•	” Ì«” Ì«” Ì«” Ì«”  Ì«”" Ì«”$ Ì«”& Ì«”+ Ì«”- Ì« ”/ Ì«"”1 Ì«$’” Ì””/ Ì”'˜” Ì•” Ì•	” Ì¬”! Ì¬”" Ì¬”( Ì¬”) Ì¬”5 Ì¬(’” Ì–” Ì–	–” Ì–” Ì–	” Ìœ” Ìœ” Ìœ” Ìœ–” Ì—” Ì—” Ì—” Ì—” Ì—”$ Ì—–” Ì—” Ì—” Ì˜” Ì˜” Ì˜” Ì˜˜” Ì—” Ì—” Ì™” Ì™” Ì™”! Ì™”" Ì™”+ Ì™%š” Ì—” Ì—” Ìš” Ìš” Ìš” Ìš” Ìš”  Ìš”" Ìš”$ Ìš’” Ì—” Ì—’” Ì–” Ì–	’” Ì” Ì	–” Ì” Ì	” Ì£” Ì£” Ì£” Ì£–” Ì” Ì	” Ì¤” Ì¤” Ì¤” Ì¤˜” Ì” Ì	” Ì¥” Ì¥”  Ì¥”% Ì¥”& Ì¥”+ Ì¥"–” Ì” Ì	” Ì¦” Ì¦” Ì¦” Ì¦’” ÌŸ” ÌŸ–” ÌŸ” ÌŸ” Ì ” Ì ” Ì ” Ì –” ÌŸ” ÌŸ” Ì¡” Ì¡” Ì¡” Ì¡’” Ì” Ì	’” Ì””+ Ì”'’” Ì•” Ì•	‘” Ì­’” Ì°” Ì°’” Ì±” Ì±
+–” Ì±” Ì±
+” Ìº” Ìº
+” Ìº” Ìº–” Ì±” Ì±
+” Ì»” Ì»” Ì»” Ì»˜” Ì±” Ì±
+” Ì¼”! Ì¼”" Ì¼”+ Ì¼”, Ì¼”2 Ì¼$’” Ì²” Ì²–” Ì²” Ì²” Ì³	” Ì³” Ì³” Ì³–” Ì²” Ì²” Ì´	” Ì´” Ì´” Ì´š” Ì²” Ì²” Ìµ	” Ìµ” Ìµ” Ìµ”! Ìµ”# Ìµ”% Ìµ”' Ìµ”” Ì¶” Ì¶
+” Ì¶” Ì¶–” Ì¶” Ì¶
+” Ì·	” Ì·” Ì·” Ì·˜” Ì¶” Ì¶
+” Ì¸	” Ì¸” Ì¸”! Ì¸”" Ì¸”+ Ì¸#’” Ì¶” Ì¶
+’” Ì±” Ì±
+‘” Ì½‘” Ì¿’” ÌÀ” ÌÀ
+–” ÌÀ” ÌÀ
+” Ìç” Ìç
+” Ìç” Ìç–” ÌÀ” ÌÀ
+” Ìè” Ìè” Ìè”  Ìè˜” ÌÀ” ÌÀ
+” Ìé”" Ìé”# Ìé”) Ìé”* Ìé”1 Ìé#•” ÌÁ” ÌÁ
+” ÌÁ” ÌÁ”" ÌÁ•” ÌÂ” ÌÂ
+” ÌÂ” ÌÂ”# ÌÂ” ÌÄ” ÌÄ
+” ÌÄ” ÌÄ” ÌÄ”  ÌÄ”' ÌÄ!”) ÌÄ#”- ÌÄ'”. ÌÄ(”2 ÌÄ,”3 ÌÄ-”: ÌÄ4”< ÌÄ6•” ÌÅ” ÌÅ” ÌÅ”" ÌÅ”/ ÌÅ‘” ÌÆ‘” ÌÆ” ÌÇ” ÌÇ”' ÌÇ”) ÌÇ”3 ÌÇ”> ÌÇ”ÌC ÌÇ%”ÌM ÌÇ/”Ìj ÌÇ”Ìo ÌÇ%”Ìy ÌÇ/”Ì‰ ÌÇ/”Ì‹ ÌÇ1œ” ÌÇ” ÌÇ”  Ìã	”, Ìã”- Ìã”0 Ìã”2 Ìã”3 Ìã”7 Ìã ”8 Ìã!”ÌA Ìã*”ÌC Ìã,–” ÌÇ” ÌÇ”  Ìä	”, Ìä”- Ìä”. Ìä’” ÌÈ
+” ÌÈ–” ÌÈ
+” ÌÈ” ÌŞ”" ÌŞ”# ÌŞ”) ÌŞÜ ” ÌÈ
+” ÌÈ” Ìà”$ Ìà”% Ìà”' Ìà”+ Ìà”- Ìà”/ Ìà”1 Ìà”6 Ìà$”8 Ìà&”: Ìà(”< Ìà*”ÌB Ìà0”ÌD Ìà2”ÌH Ìà6”ÌI Ìà7”ÌU ÌàÌC”ÌW ÌàÌEœ” ÌÈ
+” ÌÈ” Ìá”' Ìá”( Ìá”+ Ìá”- Ìá”. Ìá”2 Ìá ”3 Ìá!”= Ìá+”? Ìá-’”ÌE ÌÉ9”ÌJ ÌÉÌF˜”( ÌË”, ÌË”0 ÌË”1 ÌË”5 ÌË”: ÌË"”; ÌË#”= ÌË%•”? ÌÒ”ÌF ÌÒ”ÌG ÌÒ”ÌJ ÌÒ ”ÌL ÌÒ"š”8 ÌÓ”> ÌÓ”Ì@ ÌÓ”ÌC ÌÓ!”ÌG ÌÓ%”ÌH ÌÓ&”ÌM ÌÓ+”ÌO ÌÓ-”ÌQ ÌÓ/”ÌR ÌÓ0””8 ÌÔ”< ÌÔ”> ÌÔ”Ì@ ÌÔÜ ”< ÌÕ”ÌB ÌÕ”ÌC ÌÕ”ÌJ ÌÕ&”ÌK ÌÕ'”ÌM ÌÕ)”ÌP ÌÕ,”ÌR ÌÕ.”Ìi ÌÕÌE”Ìk ÌÕÌG”Ìq ÌÕÌM”Ìs ÌÕÌO”Ìu ÌÕÌQ”Ìw ÌÕÌS”Ìy ÌÕÌU”Ì{ ÌÕÌW”Ì} ÌÕÌY”Ì ÌÕÌ[”Ì€ ÌÕÌ\”Ì ÌÕÌ]‘”9 ÌÖ’”4 Ì×”5 Ì×“”ÌT ÌÌ”Ì] ÌÌ”Ìd ÌÌ–”Ì@ ÌÍ”ÌE ÌÍ”ÌG ÌÍ”ÌK ÌÍ”ÌL ÌÍ ”ÌQ ÌÍ%—”Ì@ ÌÎ”ÌI ÌÎ”ÌK ÌÎ”ÌL ÌÎ ”ÌR ÌÎ.”ÌT ÌÎ0”ÌV ÌÎ2”ÌD ÌÏ”ÌJ ÌÏ”ÌK ÌÏ”ÌO ÌÏ!”ÌP ÌÏ"”ÌT ÌÏ&”ÌU ÌÏ'”Ìa ÌÏ3”Ìc ÌÏ5”Ìe ÌÏ7”Ìk ÌÏ=”Ìl ÌÏ>”Ìm ÌÏ?’”Ì@ ÌĞ”ÌA ÌĞ‘”= ÌÑ–”ÌD ÌÍ”ÌI ÌÍ”ÌK ÌÍ”ÌO ÌÍ”ÌP ÌÍ ”ÌU ÌÍ%—”ÌD ÌÎ”ÌM ÌÎ”ÌO ÌÎ”ÌP ÌÎ ”ÌV ÌÎ.”ÌX ÌÎ0”ÌZ ÌÎ2”ÌH ÌÏ”ÌN ÌÏ”ÌO ÌÏ”ÌS ÌÏ!”ÌT ÌÏ"”ÌX ÌÏ&”ÌY ÌÏ'”Ìe ÌÏ3”Ìg ÌÏ5”Ìi ÌÏ7”Ìo ÌÏ=”Ìp ÌÏ>”Ìq ÌÏ?’”ÌD ÌĞ”ÌE ÌĞ‘”) ÌØ‘”- ÌØš”ÌT ÌÙ”Ì` ÌÙ”Ìg ÌÙ”Ìi ÌÙ!”Ìk ÌÙ#”Ìm ÌÙ%”Ìq ÌÙ)”Ìr ÌÙ*”Ìt ÌÙ,”Ìv ÌÙ.–”ÌD ÌÙ!”ÌF ÌÙ#”ÌH ÌÙ%”ÌL ÌÙ)”ÌM ÌÙ*”ÌO ÌÙ,‘”) ÌÚ’”$ ÌÊ”, ÌÊÜ ”8 ÌÜ”9 ÌÜ”= ÌÜ”? ÌÜ”ÌD ÌÜ,”ÌF ÌÜ.”ÌH ÌÜ0”ÌI ÌÜ1”ÌL ÌÜ4”ÌP ÌÜ8”ÌQ ÌÜ9”ÌU ÌÜ=”ÌY ÌÜÌA”Ì^ ÌÜÌF”Ìb ÌÜÌJ”Ìf ÌÜÌN”Ìg ÌÜÌO”Ìl ÌÜÌT”Ìn ÌÜÌV”Ìp ÌÜÌX”Ìt ÌÜÌ\”Ìx ÌÜÌ`”Ìz ÌÜÌb””6 ÌÉ”: ÌÉ”; ÌÉ”ÌE ÌÉ'’” ÌÉ”# ÌÉ’” ÌÈ
+” ÌÈ’” ÌÇ” ÌÇ‘” Ìå’” ÌÀ” ÌÀ
+‘” ÌêÔrH–§version¤file§sources®sourcesContent¥names¨mappingsÀ‘À‘ÀÜ¦‘”    ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”  	 ‘”  
+ ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”   ‘”    ‘”  ! ‘”  " ‘”  # ‘”  $ ‘”  % ‘”  & ‘”  ' ‘”  ( ‘”  ) ‘”  * ‘”  + ‘”  , ‘”  - ‘”  . ‘”  / ‘”  0 ‘”  1 ‘”  2 ‘”  3 ‘”  4 ‘”  5 ‘”  6 ‘”  7 ‘”  8 ‘”  9 ‘”  : ‘”  ; ‘”  < ‘”  = ‘”  > ‘”  ? ‘”  Ì@ ‘”  ÌA ‘”  ÌB ‘”  ÌC ‘”  ÌD ‘”  ÌE ‘”  ÌF ‘”  ÌG ‘”  ÌH ‘”  ÌI ‘”  ÌJ ‘”  ÌK ‘”  ÌL ‘”  ÌM ‘”  ÌN ‘”  ÌO ‘”  ÌP ‘”  ÌQ ‘”  ÌR ‘”  ÌS ‘”  ÌT ‘”  ÌU ‘”  ÌV ‘”  ÌW ‘”  ÌX ‘”  ÌY ‘”  ÌZ ‘”  Ì[ ‘”  Ì\ ‘”  Ì] ‘”  Ì^ ‘”  Ì_ ‘”  Ì` ‘”  Ìa ‘”  Ìb ‘”  Ìc ‘”  Ìd ‘”  Ìe ‘”  Ìf ‘”  Ìg ‘”  Ìh ‘”  Ìi ‘”  Ìj ‘”  Ìk ‘”  Ìl ‘”  Ìm ‘”  Ìn ‘”  Ìo ‘”  Ìp ‘”  Ìq ‘”  Ìr ‘”  Ìs ‘”  Ìt ‘”  Ìu ‘”  Ìv ‘”  Ìw ‘”  Ìx ‘”  Ìy ‘”  Ìz ‘”  Ì{ ‘”  Ì| ‘”  Ì} ‘”  Ì~ ‘”  Ì ‘”  Ì€ ‘”  Ì ‘”  Ì‚ ‘”  Ìƒ ‘”  Ì„ ‘”  Ì… ‘”  Ì† ‘”  Ì‡ ‘”  Ìˆ ‘”  Ì‰ ‘”  ÌŠ ‘”  Ì‹ ‘”  ÌŒ ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì ‘”  Ì‘ ‘”  Ì’ ‘”  Ì“ ‘”  Ì” ‘”  Ì• ‘”  Ì– ‘”  Ì— ‘”  Ì˜ ‘”  Ì™ ‘”  Ìš ‘”  Ì› ‘”  Ìœ ‘”  Ì ‘”  Ì ‘”  ÌŸ ‘”  Ì  ‘”  Ì¡ ‘”  Ì¢ ‘”  Ì£ ‘”  Ì¤ ‘”  Ì¥ ‘”  Ì¦ ‘”  Ì§ ‘”  Ì¨ ‘”  Ì© ‘”  Ìª ‘”  Ì« ‘”  Ì¬ ‘”  Ì­ ‘”  Ì® ‘”  Ì¯ ‘”  Ì° ‘”  Ì± ‘”  Ì² ‘”  Ì³ ‘”  Ì´ ‘”  Ìµ ‘”  Ì¶ ‘”  Ì· ‘”  Ì¸ ‘”  Ì¹ ‘”  Ìº ‘”  Ì» ‘”  Ì¼ ‘”  Ì½ ‘”  Ì¾ ‘”  Ì¿ ‘”  ÌÀ ‘”  ÌÁ ‘”  ÌÂ ‘”  ÌÃ ‘”  ÌÄ ‘”  ÌÅ ‘”  ÌÆ ‘”  ÌÇ ‘”  ÌÈ ‘”  ÌÉ ‘”  ÌÊ ‘”  ÌË ‘”  ÌÌ ‘”  ÌÍ ‘”  ÌÎ ‘”  ÌÏ ‘”  ÌĞ ‘”  ÌÑ ‘”  ÌÒ ‘”  ÌÓ ‘”  ÌÔ ‘”  ÌÕ ‘”  ÌÖ ‘”  Ì× ‘”  ÌØ ‘”  ÌÙ ‘”  ÌÚ ‘”  ÌÛ ‘”  ÌÜ ‘”  Ìİ ‘”  ÌŞ ‘”  Ìß ‘”  Ìà ‘”  Ìá ‘”  Ìâ ‘”  Ìã ‘”  Ìä ‘”  Ìå ‘”  Ìæ ‘”  Ìç ‘”  Ìè ‘”  Ìé ‘”  Ìê ‘”  Ìë ‘”  Ìì ‘”  Ìí ‘”  Ìî ‘”  Ìï ‘”  Ìğ ‘”  Ìñ ‘”  Ìò ‘”  Ìó ‘”  Ìô ‘”  Ìõ ‘”  Ìö ‘”  Ì÷ ‘”  Ìø ‘”  Ìù ‘”  Ìú ‘”  Ìû ‘”  Ìü ‘”  Ìı ‘”  Ìş ‘”  Ìÿ ‘”  Í  ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í	 ‘”  Í
+ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í  ‘”  Í! ‘”  Í" ‘”  Í# ‘”  Í$ ‘”  Í% ‘”  Í& ‘”  Í' ‘”  Í( ‘”  Í) ‘”  Í* ‘”  Í+ ‘”  Í, ‘”  Í- ‘”  Í. ‘”  Í/ ‘”  Í0 ‘”  Í1 ‘”  Í2 ‘”  Í3 ‘”  Í4 ‘”  Í5 ‘”  Í6 ‘”  Í7 ‘”  Í8 ‘”  Í9 ‘”  Í: ‘”  Í; ‘”  Í< ‘”  Í= ‘”  Í> ‘”  Í? ‘”  Í@ ‘”  ÍA ‘”  ÍB ‘”  ÍC ‘”  ÍD ‘”  ÍE ‘”  ÍF ‘”  ÍG ‘”  ÍH ‘”  ÍI ‘”  ÍJ ‘”  ÍK ‘”  ÍL ‘”  ÍM ‘”  ÍN ‘”  ÍO ‘”  ÍP ‘”  ÍQ ‘”  ÍR ‘”  ÍS ‘”  ÍT ‘”  ÍU ‘”  ÍV ‘”  ÍW ‘”  ÍX ‘”  ÍY ‘”  ÍZ ‘”  Í[ ‘”  Í\ ‘”  Í] ‘”  Í^ ‘”  Í_ ‘”  Í` ‘”  Ía ‘”  Íb ‘”  Íc ‘”  Íd ‘”  Íe ‘”  Íf ‘”  Íg ‘”  Íh ‘”  Íi ‘”  Íj ‘”  Ík ‘”  Íl ‘”  Ím ‘”  Ín ‘”  Ío ‘”  Íp ‘”  Íq ‘”  Ír ‘”  Ís ‘”  Ít ‘”  Íu ‘”  Ív ‘”  Íw ‘”  Íx ‘”  Íy ‘”  Íz ‘”  Í{ ‘”  Í| ‘”  Í} ‘”  Í~ ‘”  Í ‘”  Í€ ‘”  Í ‘”  Í‚ ‘”  Íƒ ‘”  Í„ ‘”  Í… ‘”  Í† ‘”  Í‡ ‘”  Íˆ ‘”  Í‰ ‘”  ÍŠ ‘”  Í‹ ‘”  ÍŒ ‘”  Í ‘”  Í ‘”  Í ‘”  Í ‘”  Í‘ ‘”  Í’ ‘”  Í“ ‘”  Í” ‘”  Í• ‘”  Í– ‘”  Í— ‘”  Í˜ ‘”  Í™ ‘”  Íš ‘”  Í› ‘”  Íœ ‘”  Í ‘”  Í ‘”  ÍŸ ‘”  Í  ‘”  Í¡ ‘”  Í¢ ‘”  Í£ ‘”  Í¤ ‘”  Í¥ ÔrI’§missing¦pluginÃ¦genAbcÂÔ  ÔrJ”²dynamicImportCache¹exportAllDeclarationCache»exportNamedDeclarationCache«importCachešÔrK•¤type¥start£endªspecifiers¦source±ImportDeclarationÌ€Ì¢‘ÔrL”¤type¥start£end¥local¶ImportDefaultSpecifierÌ‡ÌÔrM”¤type¥start£end¤nameªIdentifierÌ‡Ì¦routerÔrN•¤type¥start£end¥value£raw§LiteralÌ“Ì¡¬@ohos.router®"@ohos.router"K±ImportDeclarationÌ¤ÌÔ‘ÔrO•¤type¥start£end¨imported¥local¯ImportSpecifierÌ­ÌµMªIdentifierÌ­Ìµ¨TopicApiMªIdentifierÌ­Ìµ¨TopicApiN§LiteralÌ½ÌÓ´../services/TopicApi¶'../services/TopicApi'K±ImportDeclarationÌÖÍ‘O¯ImportSpecifierÌßÌèMªIdentifierÌßÌè©AdServiceMªIdentifierÌßÌè©AdServiceN§LiteralÌğÍµ../services/AdService·'../services/AdService'K±ImportDeclarationÍ
+Í5‘O¯ImportSpecifierÍÍMªIdentifierÍÍ¥AdIdsMªIdentifierÍÍ¥AdIdsN§LiteralÍ Í4²../constants/AdIds´'../constants/AdIds'K±ImportDeclarationÍ7Í^‘O¯ImportSpecifierÍ@ÍEMªIdentifierÍ@ÍE¥StoreMªIdentifierÍ@ÍE¥StoreN§LiteralÍMÍ]®../utils/Store°'../utils/Store'K±ImportDeclarationÍ`Í‰‘O¯ImportSpecifierÍiÍoMªIdentifierÍiÍo¦DialerMªIdentifierÍiÍo¦DialerN§LiteralÍwÍˆ¯../utils/Dialer±'../utils/Dialer'K±ImportDeclarationÍ‹ÍÏ’O¯ImportSpecifierÍ”Í›MªIdentifierÍ”Í›§ListRowMªIdentifierÍ”Í›§ListRowO¯ImportSpecifierÍÍ¬MªIdentifierÍÍ¬¯TopicDataSourceMªIdentifierÍÍ¬¯TopicDataSourceN§LiteralÍ´ÍÎ¸../utils/TopicDataSourceº'../utils/TopicDataSource'K±ImportDeclarationÍÑÍ‘O¯ImportSpecifierÍÚÍãMªIdentifierÍÚÍã©TopicCardMªIdentifierÍÚÍã©TopicCardN§LiteralÍëÍ·../components/TopicCard¹'../components/TopicCard'K±ImportDeclarationÍÍA‘O¯ImportSpecifierÍÍMªIdentifierÍÍ¬NativeAdCardMªIdentifierÍÍ¬NativeAdCardN§LiteralÍ$Í@º../components/NativeAdCard¼'../components/NativeAdCard'K±ImportDeclarationÍCÍp‘O¯ImportSpecifierÍLÍRMªIdentifierÍLÍR¦ColorsMªIdentifierÍLÍR¦ColorsN§LiteralÍZÍo³../constants/Colorsµ'../constants/Colors'

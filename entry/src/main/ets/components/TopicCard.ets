@@ -1,4 +1,5 @@
 import { Topic } from '../services/TopicApi';
+import { Colors } from '../constants/Colors';
 
 /**
  * 帖子卡片（1:1 还原小程序版视觉）：
@@ -21,14 +22,14 @@ export struct TopicCard {
         Text(this.topic?.category_name ?? '')
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#222222')
+          .fontColor(Colors.BODY_TEXT)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         Text(this.topic?.salary ?? '')
           .fontSize(12)
           .fontWeight(FontWeight.Bold)
-          .fontColor('#D62828')
+          .fontColor(Colors.SALARY_TEXT)
       }
       .width('100%')
       .margin({ bottom: 8 })
@@ -36,7 +37,7 @@ export struct TopicCard {
       // 内容
       Text(this.topic?.content ?? '')
         .fontSize(14)
-        .fontColor('#222222')
+        .fontColor(Colors.BODY_TEXT)
         .lineHeight(19)
         .width('100%')
         .margin({ bottom: 10 })
@@ -44,7 +45,7 @@ export struct TopicCard {
       // 企业
       Text(this.topic?.company_name ?? '')
         .fontSize(12)
-        .fontColor('#595959')
+        .fontColor(Colors.SECONDARY_TEXT)
         .width('100%')
         .margin({ bottom: 8 })
 
@@ -56,18 +57,18 @@ export struct TopicCard {
           .margin({ right: 2 })
         Text(this.topic?.address ?? '')
           .fontSize(12)
-          .fontColor('#595959')
+          .fontColor(Colors.SECONDARY_TEXT)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
           .layoutWeight(1)
         Text('立刻联系')
           .fontSize(12)
-          .fontColor('#A67C00')
+          .fontColor(Colors.PRIMARY_TEXT)
           .textAlign(TextAlign.Center)
           .width(65)
           .height(25)
           .borderRadius(13)
-          .border({ width: 1, color: '#A67C00' })
+          .border({ width: 1, color: Colors.PRIMARY_TEXT })
           .onClick(() => {
             const mobile = this.topic?.mobile;
             if (mobile !== undefined && mobile !== null) {

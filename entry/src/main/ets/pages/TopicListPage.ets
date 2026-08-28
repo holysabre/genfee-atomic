@@ -9,6 +9,7 @@ import { Dialer } from '../utils/Dialer';
 import { ListRow, TopicDataSource } from '../utils/TopicDataSource';
 import { TopicCard } from '../components/TopicCard';
 import { NativeAdCard } from '../components/NativeAdCard';
+import { Colors } from '../constants/Colors';
 
 const PAGE_SIZE: number = 10;
 const AD_INSERT_POS: number = 8; // 每批帖子第 8 条后插入 1 条原生广告
@@ -45,8 +46,8 @@ struct TopicListPage {
       message: '感谢您使用工蜂招工找活平台。我们将严格遵守法律法规，保护您的个人信息安全。' +
         '我们会基于网络状态加载招聘信息，并在您同意后展示广告内容。请您仔细阅读并同意《用户协议》和《隐私政策》后继续使用。',
       buttons: [
-        { text: '同意', color: '#A67C00' },
-        { text: '不同意', color: '#595959' }
+        { text: '同意', color: Colors.PRIMARY_TEXT },
+        { text: '不同意', color: Colors.SECONDARY_TEXT }
       ]
     }).then((result) => {
       if (result.index === 0) {
@@ -131,7 +132,7 @@ struct TopicListPage {
       Text('工蜂招工找活平台')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#222222')
+        .fontColor(Colors.BODY_TEXT)
         .textAlign(TextAlign.Center)
         .layoutWeight(1)
       Blank()
@@ -140,7 +141,7 @@ struct TopicListPage {
     .width('100%')
     .height(this.statusBarHeight + 44)
     .padding({ top: this.statusBarHeight })
-    .backgroundColor('#B0CBEB')
+    .backgroundColor(Colors.TITLE_BAR_BG)
   }
 
   @Builder
@@ -150,7 +151,7 @@ struct TopicListPage {
       Row() {
         Text(this.address)
           .fontSize(12)
-          .fontColor('#222222')
+          .fontColor(Colors.BODY_TEXT)
           .margin({ left: 10 })
       }
       .width('100%')
@@ -169,7 +170,7 @@ struct TopicListPage {
     .width('100%')
     .height(36)
     .padding({ left: 20, right: 20 })
-    .backgroundColor('#B0CBEB')
+    .backgroundColor(Colors.TITLE_BAR_BG)
   }
 
   @Builder
@@ -181,7 +182,7 @@ struct TopicListPage {
         .margin({ bottom: 10 })
       Text('暂无数据')
         .fontSize(14)
-        .fontColor('#333333')
+        .fontColor(Colors.BODY_TEXT)
     }
     .width('100%')
     .height(400)
@@ -230,6 +231,6 @@ struct TopicListPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#B0CBEB')
+    .backgroundColor(Colors.PAGE_BG)
   }
 }
