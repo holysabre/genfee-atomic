@@ -1,10 +1,8 @@
-import { common } from '@kit.AbilityKit';
 import { router } from '@kit.ArkUI';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Topic, TopicApi } from '../services/TopicApi';
 import { AdService } from '../services/AdService';
 import { AdIds } from '../constants/AdIds';
-import { Store } from '../utils/Store';
 import { Dialer } from '../utils/Dialer';
 import { ListRow, TopicDataSource } from '../utils/TopicDataSource';
 import { TopicCard } from '../components/TopicCard';
@@ -31,37 +29,7 @@ struct TopicListPage {
   aboutToAppear(): void {
     this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
     this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
-    // 合规：首次启动必须先获得隐私协议同意，同意后才请求数据与广告
-    if (Store.getBool('privacy_agreed', false)) {
-      this.loadList(true, true);
-    } else {
-      this.showPrivacyDialog();
-    }
-  }
-
-  /** 首启隐私协议弹窗（广告合规硬性要求：同意前不得请求广告） */
-  private showPrivacyDialog(): void {
-    this.getUIContext().getPromptAction().showDialog({
-      title: '用户协议与隐私政策',
-      message: '感谢您使用工蜂招工找活平台。我们将严格遵守法律法规，保护您的个人信息安全。' +
-        '我们会基于网络状态加载招聘信息，并在您同意后展示广告内容。请您仔细阅读并同意《用户协议》和《隐私政策》后继续使用。',
-      buttons: [
-        { text: '同意', color: Colors.PRIMARY_TEXT },
-        { text: '不同意', color: Colors.SECONDARY_TEXT }
-      ]
-    }).then((result) => {
-      if (result.index === 0) {
-        Store.putBool('privacy_agreed', true);
-        this.initAfterConsent();
-      } else {
-        // 不同意则退出（行业通行合规做法）
-        (getContext(this) as common.UIAbilityContext).terminateSelf();
-      }
-    });
-  }
-
-  private async initAfterConsent(): Promise<void> {
-    // 注：元服务不支持 OAID（identifier 被禁用），无需广告权限初始化，仅非个性化广告
+    // 隐私声明已由平台托管（AGC 标准化隐私声明托管服务），无需自建弹窗，直接加载数据
     this.loadList(true, true);
   }
 
@@ -129,7 +97,7 @@ struct TopicListPage {
       // 左侧与右侧占位等宽，使标题在视觉中心与胶囊水平中心对齐
       Blank()
         .width(CAPSULE_MARGIN_RIGHT)
-      Text('工蜂招工找活平台')
+      Text('工蜂元服务')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(Colors.BODY_TEXT)

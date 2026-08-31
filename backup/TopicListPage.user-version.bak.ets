@@ -45,7 +45,7 @@ struct TopicListPage {
   private showPrivacyDialog(): void {
     this.getUIContext().getPromptAction().showDialog({
       title: '用户协议与隐私政策',
-      message: '感谢您使用工蜂招工找活平台。我们将严格遵守法律法规，保护您的个人信息安全。' +
+      message: '感谢您使用工蜂元服务。我们将严格遵守法律法规，保护您的个人信息安全。' +
         '我们会基于网络状态加载招聘信息，并在您同意后展示广告内容。请您仔细阅读并同意《用户协议》和《隐私政策》后继续使用。',
       buttons: [
         { text: '同意', color: '#A67C00' },
@@ -103,7 +103,7 @@ struct TopicListPage {
   @Builder titleBar() {
     Row() {
       Blank().width(CAPSULE_MARGIN_RIGHT)
-      Text('工蜂招工找活平台').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#222222').textAlign(TextAlign.Center).layoutWeight(1)
+      Text('工蜂元服务').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#222222').textAlign(TextAlign.Center).layoutWeight(1)
       Blank().width(CAPSULE_MARGIN_RIGHT)
     }
     .width('100%').height(this.statusBarHeight + 44).padding({ top: this.statusBarHeight }).backgroundColor('#B0CBEB')

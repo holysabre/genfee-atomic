@@ -117,8 +117,7 @@
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.app.ability.common.d.ts"
       ],
       "parent": [
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/entryability/EntryAbility.ets",
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicListPage.ets"
+        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/entryability/EntryAbility.ets"
       ],
       "error": true,
       "errorCodes": [
@@ -795,7 +794,6 @@
       "parent": [
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.arkui.UIContext.d.ts",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Store.ets",
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicListPage.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.d.ts",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicDetailPage.ets"
@@ -1601,7 +1599,7 @@
       "error": false
     },
     "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets": {
-      "mtimeMs": 1787208379312.1047,
+      "mtimeMs": 1788167448424.9229,
       "children": [
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.advertising.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.app.ability.common.d.ts",
@@ -1687,15 +1685,13 @@
       "error": false
     },
     "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicListPage.ets": {
-      "mtimeMs": 1787639557649.2087,
+      "mtimeMs": 1788167434894.5283,
       "children": [
-        "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.app.ability.common.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.router.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.hilog.d.ts",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/TopicApi.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/AdService.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/constants/AdIds.ets",
-        "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Store.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/Dialer.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/utils/TopicDataSource.ets",
         "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/components/TopicCard.ets",
@@ -1705,8 +1701,8 @@
       "parent": [],
       "error": true,
       "errorCodes": [
-        28040,
-        28007
+        28007,
+        28040
       ]
     },
     "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/services/HttpClient.ets": {
@@ -1888,7 +1884,7 @@
       "error": false
     },
     "/Users/pange/Codes/genfee/worker-bee-atomic-service/entry/src/main/ets/pages/TopicDetailPage.ets": {
-      "mtimeMs": 1787639649565.6458,
+      "mtimeMs": 1788167451107.337,
       "children": [
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.router.d.ts",
         "/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/ets/api/@ohos.app.ability.common.d.ts",

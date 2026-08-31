@@ -11,32 +11,32 @@ export class TopicDataSource implements IDataSource {
     totalCount(): number {
         return this.rows.length;
     }
-    getData(d9: number): ListRow {
-        return this.rows[d9];
+    getData(c9: number): ListRow {
+        return this.rows[c9];
     }
-    registerDataChangeListener(c9: DataChangeListener): void {
-        if (this.listeners.indexOf(c9) < 0) {
-            this.listeners.push(c9);
+    registerDataChangeListener(b9: DataChangeListener): void {
+        if (this.listeners.indexOf(b9) < 0) {
+            this.listeners.push(b9);
         }
     }
-    unregisterDataChangeListener(a9: DataChangeListener): void {
-        const b9 = this.listeners.indexOf(a9);
-        if (b9 >= 0) {
-            this.listeners.splice(b9, 1);
+    unregisterDataChangeListener(z8: DataChangeListener): void {
+        const a9 = this.listeners.indexOf(z8);
+        if (a9 >= 0) {
+            this.listeners.splice(a9, 1);
         }
     }
-    replaceAll(z8: ListRow[]): void {
-        this.rows = z8;
+    replaceAll(y8: ListRow[]): void {
+        this.rows = y8;
         this.notifyReload();
     }
-    append(y8: ListRow[]): void {
-        this.rows = this.rows.concat(y8);
+    append(x8: ListRow[]): void {
+        this.rows = this.rows.concat(x8);
         this.notifyReload();
     }
     isEmpty(): boolean {
         return this.rows.length === 0;
     }
     private notifyReload(): void {
-        this.listeners.forEach((x8: DataChangeListener) => x8.onDataReloaded());
+        this.listeners.forEach((w8: DataChangeListener) => w8.onDataReloaded());
     }
 }

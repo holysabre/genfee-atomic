@@ -3,8 +3,8 @@
  */
 export const BUNDLE_NAME = 'com.atomicservice.6917614059205018261';
 export const BUNDLE_TYPE = 'atomicService';
-export const VERSION_CODE = 1000003;
-export const VERSION_NAME = '1.0.3';
+export const VERSION_CODE = 1000004;
+export const VERSION_NAME = '1.0.4';
 export const TARGET_NAME = 'default';
 export const PRODUCT_NAME = 'default';
 export const BUILD_MODE_NAME = 'release';

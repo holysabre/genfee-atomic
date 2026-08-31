@@ -7,27 +7,27 @@ export interface ApiResponse<T> {
 }
 export class HttpClient {
     private static readonly BASE_URL: string = 'https://api.ggfee.cn/mini';
-    static async get<t12>(u12: string): Promise<ApiResponse<t12>> {
-        const v12 = HttpClient.BASE_URL + u12;
-        const w12 = http.createHttp();
+    static async get<s12>(t12: string): Promise<ApiResponse<s12>> {
+        const u12 = HttpClient.BASE_URL + t12;
+        const v12 = http.createHttp();
         try {
-            const z12 = await w12.request(v12, {
+            const y12 = await v12.request(u12, {
                 method: http.RequestMethod.GET,
                 header: { 'content-type': 'application/json' },
                 connectTimeout: 10000,
                 readTimeout: 10000
             });
-            if (z12.responseCode === 200 && typeof z12.result === 'string') {
-                return JSON.parse(z12.result) as ApiResponse<t12>;
+            if (y12.responseCode === 200 && typeof y12.result === 'string') {
+                return JSON.parse(y12.result) as ApiResponse<s12>;
             }
-            return { code: z12.responseCode, msg: '网络异常' };
+            return { code: y12.responseCode, msg: '网络异常' };
         }
-        catch (x12) {
-            const y12 = x12 as BusinessError;
-            return { code: y12.code ?? -1, msg: y12.message ?? '请求失败' };
+        catch (w12) {
+            const x12 = w12 as BusinessError;
+            return { code: x12.code ?? -1, msg: x12.message ?? '请求失败' };
         }
         finally {
-            w12.destroy();
+            v12.destroy();
         }
     }
 }

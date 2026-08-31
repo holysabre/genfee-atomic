@@ -25,7 +25,7 @@ export interface RewardAdCallbacks {
  * 元服务限制（编译器确认）：
  * - 不支持 identifier / getOAID → 无法获取 OAID，只能投放**非个性化广告**
  * - AdLoader.loadAd 仅支持三参回调形式（无 Promise 重载），此处封装为 Promise
- * - 模拟器不出广告，必须真机联调；请求广告前须先获得隐私协议同意（页面层控制）
+ * - 模拟器不出广告，必须真机联调。隐私声明已由平台托管（AGC 标准化隐私声明托管服务），页面无需自建同意弹窗，可直接请求广告
  */
 export class AdService {
   /** 加载原生广告（adType=3）。返回空数组表示无填充/失败，调用方静默隐藏广告位即可 */

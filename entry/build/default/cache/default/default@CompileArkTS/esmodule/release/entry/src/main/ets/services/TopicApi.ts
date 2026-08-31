@@ -20,10 +20,10 @@ export interface TopicDetailData {
     data: Topic;
 }
 export class TopicApi {
-    static list(u8: number, v8: number = 1, w8: number = 0): Promise<ApiResponse<TopicListData>> {
-        return HttpClient.get<TopicListData>(`/agent_topics?page=${u8}&per_page=10&party=${v8}&region_id=${w8}`);
+    static list(t8: number, u8: number = 1, v8: number = 0): Promise<ApiResponse<TopicListData>> {
+        return HttpClient.get<TopicListData>(`/agent_topics?page=${t8}&per_page=10&party=${u8}&region_id=${v8}`);
     }
-    static detail(t8: number): Promise<ApiResponse<TopicDetailData>> {
-        return HttpClient.get<TopicDetailData>(`/agent_topics/${t8}`);
+    static detail(s8: number): Promise<ApiResponse<TopicDetailData>> {
+        return HttpClient.get<TopicDetailData>(`/agent_topics/${s8}`);
     }
 }

@@ -1,4 +1,4 @@
-# 工蜂招工找活平台 - 鸿蒙元服务（Atomic Service）
+# 工蜂元服务 - 鸿蒙元服务（Atomic Service）
 
 HarmonyOS 元服务客户端，ArkTS + ArkUI 原生开发，构建工具 Hvigor。
 
@@ -131,7 +131,21 @@ openssl cms -inform DER -in <profile>.p7b -cmsout -print | head
 
 ### 其他风险点（建议整改）
 
-- 首页隐私弹窗点「不同意」会直接 `terminateSelf()` 退出，审核机可能记录为「打不开」。建议改为停留在空白引导页而不是退出。
+- ~~首页隐私弹窗点「不同意」会直接 `terminateSelf()` 退出，审核机可能记录为「打不开」。~~ **已整改**：接入平台隐私托管服务后，自建隐私弹窗已删除（见下节 §4.1）。
+
+## 4.1 审核驳回「出现两个隐私弹窗」——删除自建隐私声明弹窗
+
+**现象**：接入 AGC 平台隐私托管服务后，审核反馈「元服务出现两个隐私弹窗，影响用户体验」，要求删除自行构建的隐私声明弹窗。
+
+**原因**：平台隐私托管服务已在系统层弹出隐私声明，代码里 `TopicListPage` 又自建了一个 `showDialog` 隐私弹窗（`aboutToAppear` 里检查 `privacy_agreed`，未同意则弹窗），导致首次打开连弹两次。
+
+**修复**（已在源码中修复）：
+1. 删除 `TopicListPage.ets` 中的 `showPrivacyDialog()`、`initAfterConsent()` 及 `privacy_agreed` 读写逻辑，`aboutToAppear` 直接 `loadList`
+2. 移除不再使用的 `common`、`Store` import
+3. 同步更新 `AdService.ets` / `TopicDetailPage.ets` 中「须先获得隐私协议同意」的过时注释
+4. `Store.ets` 保留（`EntryAbility` 仍在 `Store.init` 使用）
+
+**参考**：华为《标准化隐私声明托管服务FAQ》https://developer.huawei.com/consumer/cn/doc/app/50128-FAQ
 
 ## 5. 命令行 hvigor 构建注意事项
 

@@ -1,6 +1,6 @@
 {
   "modelVersion": "5.1.1",
-  "description": "工蜂招工找活平台 - 鸿蒙元服务（原生 ArkTS）",
+  "description": "工蜂元服务",
   "dependencies": {},
   "devDependencies": {
     "@ohos/hypium": "1.0.21",

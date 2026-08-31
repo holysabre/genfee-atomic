@@ -35,7 +35,7 @@ struct TopicDetailPage {
     if (id > 0) {
       this.loadDetail(id);
     }
-    // 合规：请求/展示广告前必须已获得隐私协议同意（页面层已控制，aboutToAppear 时同意态已确定）
+    // 隐私声明已由平台托管（AGC 标准化隐私声明托管服务），页面无需自建同意弹窗，可直接展示广告
     this.tryShowInterstitial();
   }
 

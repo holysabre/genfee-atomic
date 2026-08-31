@@ -49,8 +49,8 @@
     "SELECT_PRODUCT_NAME": "default",
     "MODULE_BUILD_DIR": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build",
     "BUNDLE_NAME": "com.atomicservice.6917614059205018261",
-    "VERSION_CODE": 1000003,
-    "VERSION_NAME": "1.0.3",
+    "VERSION_CODE": 1000004,
+    "VERSION_NAME": "1.0.4",
     "BUILD_PATH": {
       "OUTPUT_PATH": "/Users/pange/Codes/genfee/worker-bee-atomic-service/build/outputs/default"
     },

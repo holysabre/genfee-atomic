@@ -11,13 +11,11 @@ interface TopicListPage_Params {
     pageTotal?: number;
     loading?: boolean;
 }
-import type common from "@ohos:app.ability.common";
 import router from "@ohos:router";
 import { TopicApi } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/services/TopicApi";
 import type { Topic } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/services/TopicApi";
 import { AdService } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/services/AdService";
 import { AdIds } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/constants/AdIds";
-import { Store } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/utils/Store";
 import { Dialer } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/utils/Dialer";
 import { ListRow, TopicDataSource } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/utils/TopicDataSource";
 import { TopicCard } from "@bundle:com.atomicservice.6917614059205018261/entry/ets/components/TopicCard";
@@ -27,10 +25,10 @@ const PAGE_SIZE: number = 10;
 const AD_INSERT_POS: number = 8;
 const CAPSULE_MARGIN_RIGHT: number = 96;
 class TopicListPage extends ViewPU {
-    constructor(n8, o8, p8, q8 = -1, r8 = undefined, s8) {
-        super(n8, p8, q8, s8);
-        if (typeof r8 === "function") {
-            this.paramsGenerator_ = r8;
+    constructor(m8, n8, o8, p8 = -1, q8 = undefined, r8) {
+        super(m8, o8, p8, r8);
+        if (typeof q8 === "function") {
+            this.paramsGenerator_ = q8;
         }
         this.__dataSource = new ObservedPropertyObjectPU(new TopicDataSource(), this, "dataSource");
         this.__refreshing = new ObservedPropertySimplePU(false, this, "refreshing");
@@ -40,43 +38,43 @@ class TopicListPage extends ViewPU {
         this.page = 1;
         this.pageTotal = -1;
         this.loading = false;
-        this.setInitiallyProvidedValue(o8);
+        this.setInitiallyProvidedValue(n8);
         this.finalizeConstruction();
     }
-    setInitiallyProvidedValue(m8: TopicListPage_Params) {
-        if (m8.dataSource !== undefined) {
-            this.dataSource = m8.dataSource;
+    setInitiallyProvidedValue(l8: TopicListPage_Params) {
+        if (l8.dataSource !== undefined) {
+            this.dataSource = l8.dataSource;
         }
-        if (m8.refreshing !== undefined) {
-            this.refreshing = m8.refreshing;
+        if (l8.refreshing !== undefined) {
+            this.refreshing = l8.refreshing;
         }
-        if (m8.address !== undefined) {
-            this.address = m8.address;
+        if (l8.address !== undefined) {
+            this.address = l8.address;
         }
-        if (m8.statusBarHeight !== undefined) {
-            this.statusBarHeight = m8.statusBarHeight;
+        if (l8.statusBarHeight !== undefined) {
+            this.statusBarHeight = l8.statusBarHeight;
         }
-        if (m8.navBarHeight !== undefined) {
-            this.navBarHeight = m8.navBarHeight;
+        if (l8.navBarHeight !== undefined) {
+            this.navBarHeight = l8.navBarHeight;
         }
-        if (m8.page !== undefined) {
-            this.page = m8.page;
+        if (l8.page !== undefined) {
+            this.page = l8.page;
         }
-        if (m8.pageTotal !== undefined) {
-            this.pageTotal = m8.pageTotal;
+        if (l8.pageTotal !== undefined) {
+            this.pageTotal = l8.pageTotal;
         }
-        if (m8.loading !== undefined) {
-            this.loading = m8.loading;
+        if (l8.loading !== undefined) {
+            this.loading = l8.loading;
         }
     }
-    updateStateVars(l8: TopicListPage_Params) {
+    updateStateVars(k8: TopicListPage_Params) {
     }
-    purgeVariableDependenciesOnElmtId(k8) {
-        this.__dataSource.purgeDependencyOnElmtId(k8);
-        this.__refreshing.purgeDependencyOnElmtId(k8);
-        this.__address.purgeDependencyOnElmtId(k8);
-        this.__statusBarHeight.purgeDependencyOnElmtId(k8);
-        this.__navBarHeight.purgeDependencyOnElmtId(k8);
+    purgeVariableDependenciesOnElmtId(j8) {
+        this.__dataSource.purgeDependencyOnElmtId(j8);
+        this.__refreshing.purgeDependencyOnElmtId(j8);
+        this.__address.purgeDependencyOnElmtId(j8);
+        this.__statusBarHeight.purgeDependencyOnElmtId(j8);
+        this.__navBarHeight.purgeDependencyOnElmtId(j8);
     }
     aboutToBeDeleted() {
         this.__dataSource.aboutToBeDeleted();
@@ -91,36 +89,36 @@ class TopicListPage extends ViewPU {
     get dataSource() {
         return this.__dataSource.get();
     }
-    set dataSource(j8: TopicDataSource) {
-        this.__dataSource.set(j8);
+    set dataSource(i8: TopicDataSource) {
+        this.__dataSource.set(i8);
     }
     private __refreshing: ObservedPropertySimplePU<boolean>;
     get refreshing() {
         return this.__refreshing.get();
     }
-    set refreshing(i8: boolean) {
-        this.__refreshing.set(i8);
+    set refreshing(h8: boolean) {
+        this.__refreshing.set(h8);
     }
     private __address: ObservedPropertySimplePU<string>;
     get address() {
         return this.__address.get();
     }
-    set address(h8: string) {
-        this.__address.set(h8);
+    set address(g8: string) {
+        this.__address.set(g8);
     }
     private __statusBarHeight: ObservedPropertySimplePU<number>;
     get statusBarHeight() {
         return this.__statusBarHeight.get();
     }
-    set statusBarHeight(g8: number) {
-        this.__statusBarHeight.set(g8);
+    set statusBarHeight(f8: number) {
+        this.__statusBarHeight.set(f8);
     }
     private __navBarHeight: ObservedPropertySimplePU<number>;
     get navBarHeight() {
         return this.__navBarHeight.get();
     }
-    set navBarHeight(f8: number) {
-        this.__navBarHeight.set(f8);
+    set navBarHeight(e8: number) {
+        this.__navBarHeight.set(e8);
     }
     private page: number;
     private pageTotal: number;
@@ -128,33 +126,6 @@ class TopicListPage extends ViewPU {
     aboutToAppear(): void {
         this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
         this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
-        if (Store.getBool('privacy_agreed', false)) {
-            this.loadList(true, true);
-        }
-        else {
-            this.showPrivacyDialog();
-        }
-    }
-    private showPrivacyDialog(): void {
-        this.getUIContext().getPromptAction().showDialog({
-            title: '用户协议与隐私政策',
-            message: '感谢您使用工蜂招工找活平台。我们将严格遵守法律法规，保护您的个人信息安全。' +
-                '我们会基于网络状态加载招聘信息，并在您同意后展示广告内容。请您仔细阅读并同意《用户协议》和《隐私政策》后继续使用。',
-            buttons: [
-                { text: '同意', color: Colors.PRIMARY_TEXT },
-                { text: '不同意', color: Colors.SECONDARY_TEXT }
-            ]
-        }).then((e8) => {
-            if (e8.index === 0) {
-                Store.putBool('privacy_agreed', true);
-                this.initAfterConsent();
-            }
-            else {
-                (getContext(this) as common.UIAbilityContext).terminateSelf();
-            }
-        });
-    }
-    private async initAfterConsent(): Promise<void> {
         this.loadList(true, true);
     }
     private async loadList(v7: boolean, w7: boolean): Promise<void> {
@@ -224,7 +195,7 @@ class TopicListPage extends ViewPU {
         }, Blank);
         Blank.pop();
         this.observeComponentCreation2((p7, q7) => {
-            Text.create('工蜂招工找活平台');
+            Text.create('工蜂元服务');
             Text.fontSize(20);
             Text.fontWeight(FontWeight.Bold);
             Text.fontColor(Colors.BODY_TEXT);
@@ -355,7 +326,7 @@ class TopicListPage extends ViewPU {
                                                                 onContact: (h6: string) => {
                                                                     Dialer.dial(this.getUIContext(), h6);
                                                                 }
-                                                            }, undefined, c6, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 205, col: 19 });
+                                                            }, undefined, c6, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 173, col: 19 });
                                                             ViewPU.create(e6);
                                                             let f6 = () => {
                                                                 return {
@@ -380,7 +351,7 @@ class TopicListPage extends ViewPU {
                                                 {
                                                     this.observeComponentCreation2((y5, z5) => {
                                                         if (z5) {
-                                                            let a6 = new NativeAdCard(this, { ad: t5.ad }, undefined, y5, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 218, col: 19 });
+                                                            let a6 = new NativeAdCard(this, { ad: t5.ad }, undefined, y5, () => { }, { page: "entry/src/main/ets/pages/TopicListPage.ets", line: 186, col: 19 });
                                                             ViewPU.create(a6);
                                                             let b6 = () => {
                                                                 return {
