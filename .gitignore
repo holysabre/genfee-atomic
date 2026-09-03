@@ -1,2 +1,10 @@
 /.hvigor/
 /.idea/
+/.externalNativeBuild/
+/.cxx/
+/build/
+/entry/build/
+/entry/.preview/
+/local.properties
+*.iml
+*.log
