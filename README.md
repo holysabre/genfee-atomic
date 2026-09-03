@@ -1,4 +1,4 @@
-# 工蜂元服务 - 鸿蒙元服务（Atomic Service）
+# 工蜂 - 鸿蒙元服务（Atomic Service）
 
 HarmonyOS 元服务客户端，ArkTS + ArkUI 原生开发，构建工具 Hvigor。
 
@@ -167,3 +167,155 @@ hdc -t <connectkey> uninstall <bundleName>     # 卸载
 hdc -t <connectkey> shell hilog -x             # 实时日志
 hdc -t <connectkey> shell bm dump -a | grep <bundleName>  # 确认已安装
 ```
+
+---
+
+# 鸿蒙 4.0 适配方案
+
+> 当前主分支基于 **HarmonyOS 5.0 / API 12**（纯血鸿蒙 / HarmonyOS NEXT），已上架。
+> 用户要求兼容 **鸿蒙 4.0**，即 **HarmonyOS 4.0 / API 9~10**（兼容安卓内核阶段）。
+> 这两个是不同系统分支，需要做 API 降级适配。
+
+## 一、核心结论：必须拆出独立分支
+
+**不建议在同一分支里同时兼容 API 12 和 API 10**，原因：
+
+- **系统能力集不同**：API 12 的 ArkTS 严格模式、`@kit.*` 命名空间、纯血鸿蒙特有能力在 API 10 上不存在。
+- **元服务模型不同**：HarmonyOS NEXT 元服务就是 `.app`（多 HAP 免安装）；鸿蒙 4.0 元服务是 `.hap` 单包、能力更受限。
+- **广告 Kit 差异大**：API 10 用 `@ohos.advertising`（`ohos.advertising`），API 12 用 `@kit.AdsKit`。
+- **签名/上架通道不同**：鸿蒙 4.0 走 AGC「HarmonyOS 应用/元服务（API 9~10）」，NEXT 走「HarmonyOS NEXT 应用/元服务」。
+
+**建议做法**：从当前 `master` 切出 `feature/harmonyos4` 分支，在该分支上做 API 10 适配；主分支继续维护 NEXT 版本。
+
+## 二、需要修改的文件清单
+
+| 文件 | 当前（API 12） | 鸿蒙 4.0（API 10）修改 |
+|---|---|---|
+| `build-profile.json5` | `compatibleSdkVersion: "5.0.0(12)"` | 改为 `"4.0.0(10)"` 或 `"3.2.0(9)"` |
+| `entry/src/main/module.json5` | `installationFree: true`（元服务） | 保留；`deviceTypes` 可只保留 `phone` |
+| `AppScope/app.json5` | `bundleType: "atomicService"` | 保留；鸿蒙 4.0 同样支持 atomicService |
+| `oh-package.json5` | `modelVersion: "5.1.1"` | 改为 `"3.1.0"` |
+| 所有 `.ets` 文件 | `import { xxx } from '@kit.xxx'` | 改为 `import xxx from '@ohos.xxx'` |
+| `EntryAbility.ets` | `extends UIAbility` | 保持；但 `setColorMode`、`setWindowLayoutFullScreen` API 需用兼容写法 |
+| `TopicListPage.ets` | `LazyForEach` + `DataPanel` | API 10 支持，但状态变量写法可能需调整 |
+| `AdService.ets` / `NativeAdCard.ets` / `BannerAdView.ets` | `@kit.AdsKit` | 改为 `@ohos.advertising`，类名/参数可能有差异 |
+| `Dialer.ets` | `@kit.TelephonyKit` | 改为 `@ohos.telephony.call` |
+| `Store.ets` | `@kit.ArkData` | 改为 `@ohos.data.preferences` |
+| `HttpClient.ets` | `@kit.NetworkKit` | 改为 `@ohos.net.http` |
+
+## 三、关键 API 替换示例
+
+### 3.1 Kit 命名空间 → ohos 旧模块
+
+```ts
+// API 12（当前）
+import { http } from '@kit.NetworkKit';
+import { preferences } from '@kit.ArkData';
+import { call } from '@kit.TelephonyKit';
+import { advertising } from '@kit.AdsKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+
+// API 10（鸿蒙 4.0）
+import http from '@ohos.net.http';
+import preferences from '@ohos.data.preferences';
+import call from '@ohos.telephony.call';
+import advertising from '@ohos.advertising';
+import hilog from '@ohos.hilog';
+```
+
+### 3.2 广告 API 差异
+
+API 10 的 `@ohos.advertising` 与 API 12 的 `@kit.AdsKit` 在类型命名、回调参数上不完全一致。
+
+重点检查：
+
+- `advertising.AdLoader` → API 10 可能为 `advertising.AdLoader` 或类似名称，但方法签名不同。
+- `advertising.Advertisement` → API 10 可能叫 `advertising.Advertisement`。
+- `AutoAdComponent` / `AdComponent`（Banner/Native 模板组件）→ API 10 可能**没有这些组件**，需要手写 `Image` + `Text` 布局。
+- API 10 广告字段名可能不同（如 `adSource` / `desc` / `title` / `imgUrl`），需对照官方文档调整 `NativeAdCard.ets`。
+
+### 3.3 窗口与沉浸式
+
+```ts
+// API 12（当前）
+const win = windowStage.getMainWindowSync();
+win.setWindowLayoutFullScreen(true);
+const systemArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+
+// API 10（鸿蒙 4.0）
+const win = await windowStage.getMainWindow();
+await win.setWindowLayoutFullScreen(true);
+const systemArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+```
+
+注意 API 10 中 `getMainWindow()` 是异步的，要 `await`。
+
+### 3.4 状态栏颜色模式
+
+```ts
+// API 12（当前）
+this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+
+// API 10（鸿蒙 4.0）
+// 可能没有 setColorMode，或能力较弱；建议直接不写，或在 window 上设置 systemBar 颜色
+// 若报错，尝试删除该调用
+```
+
+## 四、语法兼容性检查
+
+API 10 的 ArkTS 编译器比 API 12 宽松，但以下写法仍需注意：
+
+| 语法 | API 12 | API 10 |
+|---|---|---|
+| `??` 空值合并 | ✅ 支持 | ✅ 支持 |
+| `?.` 可选链 | ✅ 支持 | ✅ 支持（部分场景有限制） |
+| `readonly` 类属性 | ✅ 支持 | ⚠️ 可能不支持，需改为普通 `private` |
+| `static readonly` | ✅ 支持 | ⚠️ 可能不支持 |
+| `async/await` | ✅ 支持 | ✅ 支持 |
+| 泛型接口/类 | ✅ 支持 | ⚠️ 部分泛型受限 |
+| 函数类型参数 `() => void` | ✅ 支持 | ✅ 支持 |
+
+建议适配时先全局替换 import，再逐文件编译排错。
+
+## 五、推荐迁移步骤
+
+1. **切分支**
+   ```bash
+   cd /Users/pange/Codes/genfee/worker-bee-atomic-service
+   git checkout -b feature/harmonyos4
+   ```
+
+2. **改版本配置**
+   - `build-profile.json5`：`compatibleSdkVersion` 改为 `"4.0.0(10)"`
+   - `oh-package.json5`：`modelVersion` 改为 `"3.1.0"`
+
+3. **全局替换 import 路径**
+   - 把 `@kit.` 全部替换为 `@ohos.` 对应模块
+   - 注意 AdsKit 在 API 10 对应 `@ohos.advertising`
+
+4. **逐模块编译修复**
+   - 在 DevEco Studio 里切 SDK 到 API 10
+   - 重新 Sync / Build，按报错逐行改
+
+5. **广告模块重点验证**
+   - 原生广告字段、Banner 组件是否存在
+   - 激励视频/插屏回调签名
+
+6. **真机验证**
+   - 找一台鸿蒙 4.0 真机（API 10）
+   - debug 签名运行 → AGC 测试分发 → 上架
+
+## 六、风险与建议
+
+- **元服务能力受限**：鸿蒙 4.0 元服务的入口、卡片、后台等能力比 NEXT 弱，需确认功能是否都能保留。
+- **广告收益可能降低**：API 10 广告类型和填充率与 NEXT 不同，建议评估 ROI。
+- **维护两份代码**：两个分支都要维护更新，后续新功能需要双端同步。
+- **优先建议**：如果目标用户大部分是 NEXT 设备，可以考虑**不上鸿蒙 4.0**，而是等待用户换机；如果必须覆盖，再按本方案拆分支。
+
+---
+
+**参考文档**
+
+- HarmonyOS 4.0 / API 10 元服务开发指南：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/atomic-service-development-0000001428061408-V2
+- API 10 广告 Kit（Advertiser Kit）文档：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/advertising-0000001449690277-V2
+- NEXT 与 API 10 差异说明：https://developer.huawei.com/consumer/cn/doc/harmonyos-guides-V2/api-migration-0000001501555905-V2

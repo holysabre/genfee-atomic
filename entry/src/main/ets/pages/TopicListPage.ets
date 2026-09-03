@@ -97,7 +97,7 @@ struct TopicListPage {
       // 左侧与右侧占位等宽，使标题在视觉中心与胶囊水平中心对齐
       Blank()
         .width(CAPSULE_MARGIN_RIGHT)
-      Text('工蜂元服务')
+      Text('工蜂')
         .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor(Colors.BODY_TEXT)
