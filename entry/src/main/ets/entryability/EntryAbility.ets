@@ -4,12 +4,31 @@ import Want from '@ohos.app.ability.Want';
 import hilog from '@ohos.hilog';
 import window from '@ohos.window';
 import { Store } from '../utils/Store';
+import { SettingsApi } from '../services/SettingsApi';
+import { AdIds } from '../constants/AdIds';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, 'WorkerBee', 'Ability onCreate');
     // 初始化本地存储（替代 uni.getStorageSync）
     Store.init(this.context);
+    // 启动时异步拉取广告开关与广告位配置（不阻塞 Ability 生命周期）
+    this.loadAdSettings();
+  }
+
+  private async loadAdSettings(): Promise<void> {
+    try {
+      const res = await SettingsApi.global();
+      if (res.code === 200 && res.data?.data) {
+        AdIds.applySettings(res.data.data);
+        hilog.info(0x0000, 'WorkerBee', 'ad settings loaded, enabled=%{public}s, test=%{public}s',
+          String(AdIds.AD_ENABLED), String(AdIds.USE_TEST_IDS));
+      } else {
+        hilog.warn(0x0000, 'WorkerBee', 'ad settings response invalid, fallback to defaults');
+      }
+    } catch (e) {
+      hilog.error(0x0000, 'WorkerBee', 'loadAdSettings failed %{public}s', JSON.stringify(e));
+    }
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {

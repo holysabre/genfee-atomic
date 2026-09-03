@@ -1,50 +1,89 @@
+import { GlobalSettings } from '../services/SettingsApi';
+
 /**
  * 鲸鸿动能广告位配置
- * - AD_ENABLED：全局广告总开关（验收/审核出问题时一键关闭）
- * - USE_TEST_IDS：true=华为官方测试广告位（联调用），false=正式广告位（上线前替换）
+ * - AD_ENABLED：全局广告总开关（可由 /settings/global.jhdn_ad_enable 接口覆盖）
+ * - USE_TEST_IDS：true=华为官方测试广告位，false=接口下发的正式广告位
+ * - 五个广告位 ID 优先读取 /settings/global 下发的正式位；接口未下发时退回本地测试位
  */
 export class AdIds {
-  // 鸿蒙 4.0 分支：广告已按 @ohos.advertising (API 11) 恢复
   static AD_ENABLED: boolean = true;
   static USE_TEST_IDS: boolean = true;
 
-  // 华为官方测试广告位 ID
-  private static TEST_NATIVE: string = 'testu7m3hc4gvm'; // 原生大图
-  private static TEST_BANNER: string = 'testw6vs28auh3'; // Banner
-  private static TEST_REWARD: string = 'testx9dtjwj8hp'; // 激励视频
-  private static TEST_INTERSTITIAL_VIDEO: string = 'testb4znbuh3n2'; // 插屏视频
-  private static TEST_INTERSTITIAL_IMAGE: string = 'teste9ih9j0rc3'; // 插屏图片
+  private static settings: GlobalSettings | null = null;
 
-  // TODO: 鲸鸿动能媒体服务平台创建展示位后，替换为正式广告位 ID
-  private static PROD_NATIVE: string = '';
-  private static PROD_BANNER: string = '';
-  private static PROD_REWARD: string = '';
-  private static PROD_INTERSTITIAL_VIDEO: string = '';
-  private static PROD_INTERSTITIAL_IMAGE: string = '';
+  /** 用 /settings/global 响应刷新广告配置。应在 Ability onCreate 或首页 aboutToAppear 时调用一次 */
+  static applySettings(settings: GlobalSettings | null): void {
+    AdIds.settings = settings;
+    if (settings) {
+      AdIds.AD_ENABLED = AdIds.parseBool(settings.jhdn_ad_enable, AdIds.AD_ENABLED);
+      AdIds.USE_TEST_IDS = AdIds.parseBool(settings.jhdn_ad_test, true);
+    }
+  }
+
+  private static parseBool(v: string | null | undefined, def: boolean): boolean {
+    if (v === null || v === undefined || v === '') {
+      return def;
+    }
+    return v === '1' || v.toLowerCase() === 'true';
+  }
+
+  private static fieldOrEmpty(v: string | null | undefined): string {
+    return v ?? '';
+  }
+
+  private static getProdId(key: keyof GlobalSettings): string {
+    return AdIds.fieldOrEmpty(AdIds.settings?.[key]);
+  }
+
+  private static TEST_NATIVE: string = 'testu7m3hc4gvm';
+  private static TEST_BANNER: string = 'testw6vs28auh3';
+  private static TEST_REWARD: string = 'testx9dtjwj8hp';
+  private static TEST_INTERSTITIAL_VIDEO: string = 'testb4znbuh3n2';
+  private static TEST_INTERSTITIAL_IMAGE: string = 'teste9ih9j0rc3';
 
   static nativeAdId(): string {
-    return AdIds.USE_TEST_IDS ? AdIds.TEST_NATIVE : AdIds.PROD_NATIVE;
+    const prod = AdIds.getProdId('jhdn_ad_native');
+    if (!AdIds.USE_TEST_IDS && prod.length > 0) {
+      return prod;
+    }
+    return AdIds.TEST_NATIVE;
   }
 
   static bannerAdId(): string {
-    return AdIds.USE_TEST_IDS ? AdIds.TEST_BANNER : AdIds.PROD_BANNER;
+    const prod = AdIds.getProdId('jhdn_ad_banner');
+    if (!AdIds.USE_TEST_IDS && prod.length > 0) {
+      return prod;
+    }
+    return AdIds.TEST_BANNER;
   }
 
   static rewardAdId(): string {
-    return AdIds.USE_TEST_IDS ? AdIds.TEST_REWARD : AdIds.PROD_REWARD;
+    const prod = AdIds.getProdId('jhdn_ad_reward');
+    if (!AdIds.USE_TEST_IDS && prod.length > 0) {
+      return prod;
+    }
+    return AdIds.TEST_REWARD;
   }
 
   static interstitialVideoAdId(): string {
-    return AdIds.USE_TEST_IDS ? AdIds.TEST_INTERSTITIAL_VIDEO : AdIds.PROD_INTERSTITIAL_VIDEO;
+    const prod = AdIds.getProdId('jhdn_ad_interstitial_video');
+    if (!AdIds.USE_TEST_IDS && prod.length > 0) {
+      return prod;
+    }
+    return AdIds.TEST_INTERSTITIAL_VIDEO;
   }
 
   static interstitialImageAdId(): string {
-    return AdIds.USE_TEST_IDS ? AdIds.TEST_INTERSTITIAL_IMAGE : AdIds.PROD_INTERSTITIAL_IMAGE;
+    const prod = AdIds.getProdId('jhdn_ad_interstitial_image');
+    if (!AdIds.USE_TEST_IDS && prod.length > 0) {
+      return prod;
+    }
+    return AdIds.TEST_INTERSTITIAL_IMAGE;
   }
 
   /**
    * 插屏广告位 ID：优先视频，若视频为空则退回图片
-   * 正式环境建议同时创建视频和图片展示位，按填充情况动态选择
    */
   static interstitialAdId(): string {
     const video = AdIds.interstitialVideoAdId();
