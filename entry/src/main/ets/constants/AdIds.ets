@@ -10,14 +10,22 @@ export class AdIds {
   static AD_ENABLED: boolean = true;
   static USE_TEST_IDS: boolean = true;
 
-  private static settings: GlobalSettings | null = null;
+  private static jhdn_ad_native: string = '';
+  private static jhdn_ad_banner: string = '';
+  private static jhdn_ad_reward: string = '';
+  private static jhdn_ad_interstitial_video: string = '';
+  private static jhdn_ad_interstitial_image: string = '';
 
   /** 用 /settings/global 响应刷新广告配置。应在 Ability onCreate 或首页 aboutToAppear 时调用一次 */
   static applySettings(settings: GlobalSettings | null): void {
-    AdIds.settings = settings;
     if (settings) {
       AdIds.AD_ENABLED = AdIds.parseBool(settings.jhdn_ad_enable, AdIds.AD_ENABLED);
       AdIds.USE_TEST_IDS = AdIds.parseBool(settings.jhdn_ad_test, true);
+      AdIds.jhdn_ad_native = AdIds.fieldOrEmpty(settings.jhdn_ad_native);
+      AdIds.jhdn_ad_banner = AdIds.fieldOrEmpty(settings.jhdn_ad_banner);
+      AdIds.jhdn_ad_reward = AdIds.fieldOrEmpty(settings.jhdn_ad_reward);
+      AdIds.jhdn_ad_interstitial_video = AdIds.fieldOrEmpty(settings.jhdn_ad_interstitial_video);
+      AdIds.jhdn_ad_interstitial_image = AdIds.fieldOrEmpty(settings.jhdn_ad_interstitial_image);
     }
   }
 
@@ -32,10 +40,6 @@ export class AdIds {
     return v ?? '';
   }
 
-  private static getProdId(key: keyof GlobalSettings): string {
-    return AdIds.fieldOrEmpty(AdIds.settings?.[key]);
-  }
-
   private static TEST_NATIVE: string = 'testu7m3hc4gvm';
   private static TEST_BANNER: string = 'testw6vs28auh3';
   private static TEST_REWARD: string = 'testx9dtjwj8hp';
@@ -43,7 +47,7 @@ export class AdIds {
   private static TEST_INTERSTITIAL_IMAGE: string = 'teste9ih9j0rc3';
 
   static nativeAdId(): string {
-    const prod = AdIds.getProdId('jhdn_ad_native');
+    const prod = AdIds.jhdn_ad_native;
     if (!AdIds.USE_TEST_IDS && prod.length > 0) {
       return prod;
     }
@@ -51,7 +55,7 @@ export class AdIds {
   }
 
   static bannerAdId(): string {
-    const prod = AdIds.getProdId('jhdn_ad_banner');
+    const prod = AdIds.jhdn_ad_banner;
     if (!AdIds.USE_TEST_IDS && prod.length > 0) {
       return prod;
     }
@@ -59,7 +63,7 @@ export class AdIds {
   }
 
   static rewardAdId(): string {
-    const prod = AdIds.getProdId('jhdn_ad_reward');
+    const prod = AdIds.jhdn_ad_reward;
     if (!AdIds.USE_TEST_IDS && prod.length > 0) {
       return prod;
     }
@@ -67,7 +71,7 @@ export class AdIds {
   }
 
   static interstitialVideoAdId(): string {
-    const prod = AdIds.getProdId('jhdn_ad_interstitial_video');
+    const prod = AdIds.jhdn_ad_interstitial_video;
     if (!AdIds.USE_TEST_IDS && prod.length > 0) {
       return prod;
     }
@@ -75,7 +79,7 @@ export class AdIds {
   }
 
   static interstitialImageAdId(): string {
-    const prod = AdIds.getProdId('jhdn_ad_interstitial_image');
+    const prod = AdIds.jhdn_ad_interstitial_image;
     if (!AdIds.USE_TEST_IDS && prod.length > 0) {
       return prod;
     }

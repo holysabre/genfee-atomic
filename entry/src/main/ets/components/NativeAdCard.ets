@@ -5,6 +5,16 @@ import { Colors } from '../constants/Colors';
 
 const TAG: string = 'WorkerBeeAd';
 
+/** 从 @ohos.advertising 广告对象里安全取出的原生广告素材 */
+interface NativeAdMaterial {
+  title: string;
+  description: string;
+  iconUrl: string;
+  imgUrl: string;
+  callToAction: string;
+  adSource: string;
+}
+
 /**
  * 原生广告卡片（API 11 自渲染实现）。
  * 使用 @ohos.advertising 加载的广告素材自行布局，点击后调用 showAd 打开落地页。
@@ -13,6 +23,51 @@ const TAG: string = 'WorkerBeeAd';
 @Component
 export struct NativeAdCard {
   ad: advertising.Advertisement | null = null;
+
+  private m: NativeAdMaterial = {
+    title: '',
+    description: '',
+    iconUrl: '',
+    imgUrl: '',
+    callToAction: '',
+    adSource: ''
+  };
+
+  aboutToAppear(): void {
+    this.m = this.extractMaterial();
+  }
+
+  /**
+   * API 11 的 Advertisement 创意字段挂在索引签名 [key: string]: Object 上。
+   * ArkTS 严格模式禁止 in 运算符、any/unknown、下标访问，
+   * 这里用点访问 + typeof 收窄把字段安全地取出来。
+   */
+  private strOf(value: Object): string {
+    return typeof value === 'string' ? (value as string) : '';
+  }
+
+  private extractMaterial(): NativeAdMaterial {
+    const empty: NativeAdMaterial = {
+      title: '',
+      description: '',
+      iconUrl: '',
+      imgUrl: '',
+      callToAction: '',
+      adSource: ''
+    };
+    const ad = this.ad;
+    if (ad === null) {
+      return empty;
+    }
+    return {
+      title: this.strOf(ad.title),
+      description: this.strOf(ad.description) || this.strOf(ad.desc),
+      iconUrl: this.strOf(ad.iconUrl) || this.strOf(ad.icon),
+      imgUrl: this.strOf(ad.imgUrl) || this.strOf(ad.image),
+      callToAction: this.strOf(ad.callToAction) || this.strOf(ad.buttonTxt),
+      adSource: this.strOf(ad.adSource) || this.strOf(ad.source)
+    };
+  }
 
   private showAd(): void {
     if (this.ad === null) {
@@ -33,7 +88,7 @@ export struct NativeAdCard {
     Column() {
       // 标题行：图标 + 标题 + 广告标识
       Row() {
-        Image(this.ad?.iconUrl ?? '')
+        Image(this.m.iconUrl)
           .width(36)
           .height(36)
           .borderRadius(4)
@@ -41,7 +96,7 @@ export struct NativeAdCard {
           .margin({ right: 8 })
 
         Column() {
-          Text(this.ad?.title ?? '')
+          Text(this.m.title)
             .fontSize(15)
             .fontColor(Colors.BODY_TEXT)
             .fontWeight(FontWeight.Medium)
@@ -49,7 +104,7 @@ export struct NativeAdCard {
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
 
-          Text(this.ad?.adSource ?? '广告')
+          Text(this.m.adSource || '广告')
             .fontSize(11)
             .fontColor(Colors.CAPTION_TEXT)
             .maxLines(1)
@@ -70,7 +125,7 @@ export struct NativeAdCard {
       .margin({ bottom: 8 })
 
       // 主图
-      Image(this.ad?.imgUrl ?? '')
+      Image(this.m.imgUrl)
         .width('100%')
         .height(160)
         .objectFit(ImageFit.Cover)
@@ -79,7 +134,7 @@ export struct NativeAdCard {
 
       // 描述 + 按钮
       Row() {
-        Text(this.ad?.description ?? '')
+        Text(this.m.description)
           .fontSize(13)
           .fontColor(Colors.SECONDARY_TEXT)
           .maxLines(2)
@@ -87,7 +142,7 @@ export struct NativeAdCard {
           .layoutWeight(1)
           .margin({ right: 10 })
 
-        Text(this.ad?.callToAction ?? '查看详情')
+        Text(this.m.callToAction || '查看详情')
           .fontSize(13)
           .fontColor(Color.White)
           .textAlign(TextAlign.Center)
