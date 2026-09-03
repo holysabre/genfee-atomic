@@ -1,7 +1,7 @@
-import { call } from '@kit.TelephonyKit';
-import { pasteboard } from '@kit.BasicServicesKit';
-import { UIContext } from '@kit.ArkUI';
-import { hilog } from '@kit.PerformanceAnalysisKit';
+import call from '@ohos.telephony.call';
+import pasteboard from '@ohos.pasteboard';
+import { UIContext } from '@ohos.arkui.UIContext';
+import hilog from '@ohos.hilog';
 import { Colors } from '../constants/Colors';
 
 /**

@@ -4,22 +4,23 @@
  * - USE_TEST_IDS：true=华为官方测试广告位（联调用），false=正式广告位（上线前替换）
  */
 export class AdIds {
-  static readonly AD_ENABLED: boolean = true;
-  static readonly USE_TEST_IDS: boolean = true;
+  // 鸿蒙 4.0 分支：广告 API 与组件路径差异较大，先关闭广告以优先跑通基础功能
+  static AD_ENABLED: boolean = false;
+  static USE_TEST_IDS: boolean = true;
 
   // 华为官方测试广告位 ID
-  private static readonly TEST_NATIVE: string = 'testu7m3hc4gvm'; // 原生大图
-  private static readonly TEST_BANNER: string = 'testw6vs28auh3'; // Banner
-  private static readonly TEST_REWARD: string = 'testx9dtjwj8hp'; // 激励视频
-  private static readonly TEST_INTERSTITIAL_VIDEO: string = 'testb4znbuh3n2'; // 插屏视频
-  private static readonly TEST_INTERSTITIAL_IMAGE: string = 'teste9ih9j0rc3'; // 插屏图片
+  private static TEST_NATIVE: string = 'testu7m3hc4gvm'; // 原生大图
+  private static TEST_BANNER: string = 'testw6vs28auh3'; // Banner
+  private static TEST_REWARD: string = 'testx9dtjwj8hp'; // 激励视频
+  private static TEST_INTERSTITIAL_VIDEO: string = 'testb4znbuh3n2'; // 插屏视频
+  private static TEST_INTERSTITIAL_IMAGE: string = 'teste9ih9j0rc3'; // 插屏图片
 
   // TODO: 鲸鸿动能媒体服务平台创建展示位后，替换为正式广告位 ID
-  private static readonly PROD_NATIVE: string = '';
-  private static readonly PROD_BANNER: string = '';
-  private static readonly PROD_REWARD: string = '';
-  private static readonly PROD_INTERSTITIAL_VIDEO: string = '';
-  private static readonly PROD_INTERSTITIAL_IMAGE: string = '';
+  private static PROD_NATIVE: string = '';
+  private static PROD_BANNER: string = '';
+  private static PROD_REWARD: string = '';
+  private static PROD_INTERSTITIAL_VIDEO: string = '';
+  private static PROD_INTERSTITIAL_IMAGE: string = '';
 
   static nativeAdId(): string {
     return AdIds.USE_TEST_IDS ? AdIds.TEST_NATIVE : AdIds.PROD_NATIVE;

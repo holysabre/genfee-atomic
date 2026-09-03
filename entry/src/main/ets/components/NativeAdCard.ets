@@ -1,37 +1,19 @@
-import { advertising, AdComponent } from '@kit.AdsKit';
-import { hilog } from '@kit.PerformanceAnalysisKit';
+import advertising from '@ohos.advertising';
+import hilog from '@ohos.hilog';
 
 /**
- * 原生广告卡片：混入列表信息流。
- * 使用系统渲染的 AdComponent —— 曝光/点击上报由系统自动完成，符合鲸鸿动能合规要求。
+ * 原生广告卡片（鸿蒙 4.0 占位实现）。
+ * 当前分支为优先跑通基础功能，广告总开关已关闭，本组件仅保留数据类型，不实际渲染广告。
+ * 后续如需恢复广告，需使用 @ohos.cloud.AdComponent 或按 API 10 广告文档重写。
  */
 @Component
 export struct NativeAdCard {
   ad: advertising.Advertisement | null = null;
-  private displayOptions: advertising.AdDisplayOptions = {
-    mute: true
-  };
 
   build() {
-    if (this.ad !== null) {
-      Column() {
-        AdComponent({
-          ads: [this.ad as advertising.Advertisement],
-          displayOptions: this.displayOptions,
-          interactionListener: {
-            onStatusChanged: (status: string) => {
-              hilog.info(0x0000, 'WorkerBeeAd', 'native ad status %{public}s', status);
-            }
-          }
-        })
-          .width('100%')
-          .height(240) // 联调校准点：按实际返回素材比例微调（请求参数 360x320）
-      }
+    // 广告关闭期间不渲染任何内容，避免列表出现空白卡片
+    Column()
       .width('100%')
-      .margin({ bottom: 10 })
-      .backgroundColor(Color.White)
-      .borderRadius(8)
-      .clip(true)
-    }
+      .height(0)
   }
 }

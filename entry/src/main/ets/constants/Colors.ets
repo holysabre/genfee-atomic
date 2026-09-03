@@ -11,29 +11,29 @@
  */
 export class Colors {
   /** 主强调文字色（原 #A67C00 加深版）。白底对比度约 9.2:1，远高于 3:1 */
-  static readonly PRIMARY_TEXT: string = '#5C4400';
+  static PRIMARY_TEXT: string = '#5C4400';
 
   /** 主按钮背景色（黄底黑字，对比度约 14.2:1，安全） */
-  static readonly PRIMARY_BUTTON_BG: string = '#FDD000';
+  static PRIMARY_BUTTON_BG: string = '#FDD000';
 
   /** 薪资强调色（原 #D62828 加深版）。白底对比度约 6.6:1，满足图标/标题要求 */
-  static readonly SALARY_TEXT: string = '#B52020';
+  static SALARY_TEXT: string = '#B52020';
 
   /** 标题/正文深色文字。白底对比度约 15.9:1 */
-  static readonly BODY_TEXT: string = '#222222';
+  static BODY_TEXT: string = '#222222';
 
   /** 次要文字。白底对比度约 7.0:1 */
-  static readonly SECONDARY_TEXT: string = '#595959';
+  static SECONDARY_TEXT: string = '#595959';
 
   /** 辅助说明文字。白底对比度约 5.7:1 */
-  static readonly CAPTION_TEXT: string = '#666666';
+  static CAPTION_TEXT: string = '#666666';
 
   /** 标题栏/筛选栏背景色（原 #B0CBEB 加深版）。与 #222222 对比度约 7.1:1 */
-  static readonly TITLE_BAR_BG: string = '#8FB0D9';
+  static TITLE_BAR_BG: string = '#8FB0D9';
 
   /** 页面背景色（列表页整体背景，不承载正文） */
-  static readonly PAGE_BG: string = '#B0CBEB';
+  static PAGE_BG: string = '#B0CBEB';
 
   /** 卡片/内容区背景 */
-  static readonly CARD_BG: string = '#FFFFFF';
+  static CARD_BG: string = '#FFFFFF';
 }

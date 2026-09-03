@@ -1,5 +1,5 @@
-import { http } from '@kit.NetworkKit';
-import { BusinessError } from '@kit.BasicServicesKit';
+import http from '@ohos.net.http';
+import { BusinessError } from '@ohos.base';
 
 /** 与小程序端 requestFun 对齐的响应包装：{ code, msg, data } */
 export interface ApiResponse<T> {
@@ -9,7 +9,7 @@ export interface ApiResponse<T> {
 }
 
 export class HttpClient {
-  private static readonly BASE_URL: string = 'https://api.ggfee.cn/mini';
+  private static BASE_URL: string = 'https://api.ggfee.cn/mini';
 
   /** GET 请求。path 可自带查询串（调用方拼接，规避 ArkTS 对象字面量类型限制） */
   static async get<T>(path: string): Promise<ApiResponse<T>> {

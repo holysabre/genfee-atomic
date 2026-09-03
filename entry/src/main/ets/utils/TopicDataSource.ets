@@ -1,4 +1,4 @@
-import { advertising } from '@kit.AdsKit';
+import advertising from '@ohos.advertising';
 import { Topic } from '../services/TopicApi';
 
 /** 列表行：帖子 or 广告（ArkTS 兼容性考虑，kind 用数字而非联合字面量类型） */

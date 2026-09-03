@@ -1,5 +1,5 @@
-import { router } from '@kit.ArkUI';
-import { hilog } from '@kit.PerformanceAnalysisKit';
+import router from '@ohos.router';
+import hilog from '@ohos.hilog';
 import { Topic, TopicApi } from '../services/TopicApi';
 import { AdService } from '../services/AdService';
 import { AdIds } from '../constants/AdIds';
@@ -27,8 +27,8 @@ struct TopicListPage {
   private loading: boolean = false;
 
   aboutToAppear(): void {
-    this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
-    this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
+    this.statusBarHeight = (AppStorage.get('statusBarHeight') as number) ?? 0;
+    this.navBarHeight = (AppStorage.get('navBarHeight') as number) ?? 0;
     // 隐私声明已由平台托管（AGC 标准化隐私声明托管服务），无需自建弹窗，直接加载数据
     this.loadList(true, true);
   }

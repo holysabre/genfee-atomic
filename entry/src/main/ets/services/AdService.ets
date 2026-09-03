@@ -1,6 +1,6 @@
-import { advertising } from '@kit.AdsKit';
-import { common } from '@kit.AbilityKit';
-import { hilog } from '@kit.PerformanceAnalysisKit';
+import advertising from '@ohos.advertising';
+import common from '@ohos.app.ability.common';
+import hilog from '@ohos.hilog';
 
 const TAG: string = 'WorkerBeeAd';
 

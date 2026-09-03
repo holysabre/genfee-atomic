@@ -1,12 +1,12 @@
-import { router } from '@kit.ArkUI';
-import { common } from '@kit.AbilityKit';
+import router from '@ohos.router';
+import common from '@ohos.app.ability.common';
 import { Topic, TopicApi } from '../services/TopicApi';
 import { Dialer } from '../utils/Dialer';
 import { BannerAdView } from '../components/BannerAdView';
 import { AdIds } from '../constants/AdIds';
 import { AdService } from '../services/AdService';
-import { hilog } from '@kit.PerformanceAnalysisKit';
-import { advertising } from '@kit.AdsKit';
+import hilog from '@ohos.hilog';
+import advertising from '@ohos.advertising';
 import { Colors } from '../constants/Colors';
 
 const CAPSULE_MARGIN_RIGHT: number = 96; // 元服务胶囊占位宽度
@@ -28,8 +28,8 @@ struct TopicDetailPage {
   private countdownTimer: number = -1;
 
   aboutToAppear(): void {
-    this.statusBarHeight = (AppStorage.get<number>('statusBarHeight') ?? 0);
-    this.navBarHeight = (AppStorage.get<number>('navBarHeight') ?? 0);
+    this.statusBarHeight = (AppStorage.get('statusBarHeight') as number) ?? 0;
+    this.navBarHeight = (AppStorage.get('navBarHeight') as number) ?? 0;
     const params = router.getParams() as Record<string, number> | undefined;
     const id = params?.id ?? 0;
     if (id > 0) {
@@ -54,7 +54,7 @@ struct TopicDetailPage {
     if (!AdIds.AD_ENABLED) {
       return;
     }
-    const alreadyShown = AppStorage.get<boolean>(INTERSTITIAL_SHOWN_KEY) ?? false;
+    const alreadyShown = AppStorage.get(INTERSTITIAL_SHOWN_KEY) as boolean ?? false;
     if (alreadyShown) {
       return;
     }

@@ -1,6 +1,6 @@
 {
   "modelVersion": "5.1.1",
-  "description": "工蜂元服务",
+  "description": "工蜂",
   "dependencies": {},
   "devDependencies": {
     "@ohos/hypium": "1.0.21",
