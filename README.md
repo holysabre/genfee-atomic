@@ -8,7 +8,7 @@ HarmonyOS 元服务客户端，ArkTS + ArkUI 原生开发，构建工具 Hvigor�
 - **设备类型**: phone
 - **网络**: `https://api.ggfee.cn/mini`（`@ohos.net.http`）
 - **存储**: `@ohos.data.preferences`
-- **广告**: 当前分支已关闭广告（`AdIds.AD_ENABLED = false`），避免 API 11 与 API 12 广告 Kit 差异带来的适配风险
+- **广告**: 已按 `@ohos.advertising` (API 11) 恢复。`AdIds.AD_ENABLED = true`；`NativeAdCard` / `BannerAdView` 使用自渲染实现；激励视频与插屏沿用 `AdService` 封装
 
 ## 模块结构
 
@@ -193,8 +193,8 @@ hdc -t <connectkey> shell bm dump -a | grep <bundleName>  # 确认已安装
 | `oh-package.json5` / `entry/oh-package.json5` | 保持 `modelVersion: "5.1.1"`（受当前 DevEco 版本限制） |
 | 所有 `entry/src/main/ets/**/*.ets` | `@kit.*` 命名空间全部回退为 `@ohos.*` 模块路径 |
 | `EntryAbility.ets` | 窗口 API 从同步 `getMainWindowSync()` 改为回调式 `getMainWindow((err, win) => {})`；删除 `setColorMode` 调用 |
-| `Colors.ets` / `AdIds.ets` | `static readonly` 改为 `static`；`AdIds.AD_ENABLED` 设为 `false` 以关闭广告 |
-| `NativeAdCard.ets` / `BannerAdView.ets` | 改为空占位实现，避免 API 11/12 广告组件差异导致编译失败 |
+| `Colors.ets` / `AdIds.ets` | `static readonly` 改为 `static`；`AdIds.AD_ENABLED` 设为 `true` 恢复广告 |
+| `NativeAdCard.ets` / `BannerAdView.ets` | 按 `@ohos.advertising` (API 11) 自渲染实现；加载失败时高度为 0，不破坏页面布局 |
 | `Store.ets` | `AppStorage.get<T>()` 泛型调用改为 `AppStorage.get() as T` |
 
 ## 三、关键 API 替换示例
@@ -242,13 +242,20 @@ windowStage.getMainWindow((err, win) => {
 
 ## 四、广告处理
 
-鲸鸿动能在 API 11 使用 `@ohos.advertising`，组件与字段和 API 12 的 `@kit.AdsKit` 不完全一致。为降低分支风险，本分支**暂时关闭广告**：
+鲸鸿动能在 API 11 使用 `@ohos.advertising`。与 API 12 的 `@kit.AdsKit` 不同，API 11 没有 `AdComponent` / `AutoAdComponent` 等模板组件，原生广告和 Banner 需要**自渲染**。
 
-- `AdIds.AD_ENABLED = false`
-- `NativeAdCard.ets`、`BannerAdView.ets` 渲染为空占位
-- `AdService.ets` 中广告加载逻辑被跳过
+本分支已恢复广告：
 
-后续如需在 API 11 上恢复广告，需按 `@ohos.advertising` 官方文档重写 Native/Banner 广告组件。
+- `AdIds.AD_ENABLED = true`
+- `NativeAdCard.ets`：自渲染原生大图卡片，展示图标、标题、描述、主图、行动按钮，点击调用 `advertising.showAd` 打开落地页
+- `BannerAdView.ets`：自渲染 Banner，组件初始化时拉取广告，成功则渲染为 54vp 高的横条，失败高度为 0 不占位
+- `AdService.ets`：继续封装原生/激励视频/插屏广告的加载与展示；元服务不支持 OAID，仅投放非个性化广告
+
+注意事项：
+
+- 模拟器不出广告，必须真机联调。
+- 隐私声明已由 AGC 平台托管，页面无需自建同意弹窗。
+- 正式上架前把 `AdIds.USE_TEST_IDS` 改为 `false`，并在鲸鸿动能媒体服务平台创建真实展示位，替换 `PROD_*` 空 ID。
 
 ## 五、构建验证
 
@@ -264,7 +271,7 @@ hvigorw entry:default@CompileArkTS --no-daemon
 
 - **真机验证**：找一台 HarmonyOS 4.1/4.2 真机，debug 签名运行，确认列表加载、详情页、拨号功能正常。
 - **上架通道**：在 AGC 提交时选择 **HarmonyOS 应用/元服务（API 11）** 对应入口，不要错选 NEXT 通道。
-- **广告恢复**：若 ROI 允许，按 API 11 广告文档重写 `AdService` / `NativeAdCard` / `BannerAdView`。
+- **广告调通**：真机运行，确认列表页原生广告、详情页 Banner/插屏/激励视频都能正常加载与展示；上线前切到正式广告位。
 - **长期维护**：NEXT 主分支与 `feature/harmonyos4` 分支并行维护，新增功能需双端同步验证。
 
 ---

@@ -4,8 +4,8 @@
  * - USE_TEST_IDS：true=华为官方测试广告位（联调用），false=正式广告位（上线前替换）
  */
 export class AdIds {
-  // 鸿蒙 4.0 分支：广告 API 与组件路径差异较大，先关闭广告以优先跑通基础功能
-  static AD_ENABLED: boolean = false;
+  // 鸿蒙 4.0 分支：广告已按 @ohos.advertising (API 11) 恢复
+  static AD_ENABLED: boolean = true;
   static USE_TEST_IDS: boolean = true;
 
   // 华为官方测试广告位 ID
